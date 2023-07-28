@@ -1,0 +1,20 @@
+node_modules
+# Keep environment variables out of version control
+.env
+dist
+documentation
+vault/*
+vault
+keys
+*.samples.json
+dist/*
+yarn-error.log
+
+prisma/generated/prisma-client-js
+
+data
+pgdata
+
+venv
+ai-tools
+akai.csv
