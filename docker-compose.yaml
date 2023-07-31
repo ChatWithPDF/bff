@@ -23,7 +23,7 @@ services:
       - "timescaledb"
     restart: always
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: postgres://timescaledb:postgrespassword@timescaledb:5432/postgres?sslmode=disable&connect_timeout=100
+      HASURA_GRAPHQL_DATABASE_URL: ${DATABASE_URL}
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
       ## enable debugging mode. It is recommended to disable this in production
       HASURA_GRAPHQL_DEV_MODE: "true"
