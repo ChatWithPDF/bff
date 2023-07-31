@@ -1,88 +1,45 @@
 version: '3.6'
 services:
+  timescaledb:
+    container_name: timescaledb
+    image: samagragovernance/postgres:latest-pg15
+    restart: always
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./pgdata:/var/lib/postgresql/data
+    environment:
+      POSTGRES_USER: timescaledb
+      POSTGRES_PASSWORD: postgrespassword
+
   graphql-engine:
     image: hasura/graphql-engine:latest
     ports:
       - "8080:8080"
-    networks:
-      - default
-      - letsencrypt-docker-compose
     volumes:
       - ./data/migrations:/hasura-migrations
       - ./data/metadata:/hasura-metadata
+    depends_on:
+      - "timescaledb"
     restart: always
     environment:
-      HASURA_GRAPHQL_DATABASE_URL: ${DATABASE_URL}
-      ## enable the console served by server
+      HASURA_GRAPHQL_DATABASE_URL: postgres://timescaledb:postgrespassword@timescaledb:5432/postgres?sslmode=disable&connect_timeout=100
       HASURA_GRAPHQL_ENABLE_CONSOLE: "true" # set to "false" to disable console
       ## enable debugging mode. It is recommended to disable this in production
       HASURA_GRAPHQL_DEV_MODE: "true"
       HASURA_GRAPHQL_ENABLED_LOG_TYPES: startup,http-log,webhook-log,websocket-log,query-log
-      ## uncomment next line to set an admin secret
+      # uncomment next line to set an admin secret
       HASURA_GRAPHQL_ADMIN_SECRET: ${HASURA_GRAPHQL_ADMIN_SECRET}
       HASURA_GRAPHQL_MIGRATIONS_DISABLE_TRANSACTION: "true"
       HASURA_GRAPHQL_CONSOLE_ASSETS_DIR: /srv/console-assets
 
-  ai-tools:
-    image: ghcr.io/samagra-development/ai-tools:main
-    ports:
-      - "5000:8000"
-    networks:
-      - default
-      - letsencrypt-docker-compose
-    volumes:
-      - type: bind
-        source: ./akai.csv
-        target: /app/src/embeddings/openai/remote/akai.csv
-        read_only: true
-      - type: bind
-        source: ./google-creds.json
-        target: /app/google-creds.json
-        read_only: true
-    environment:
-      OPENAI_API_KEY: ${OPENAI_API_KEY}
-      AUTH_HEADER: ${AUTH_HEADER}
-      AUTH_HEADER_KEY: Authorization
-      AZURE_TRANSLATE_KEY: ${AZURE_TRANSLATE_KEY}
-
-  service:
+  bff:
     container_name: bff
     build: .
     image: bff
-    networks:
-      - default
-      - letsencrypt-docker-compose
     restart: always
     ports:
       - "0.0.0.0:8081:3000"
-    environment:
-      DATABASE_URL: ${DATABASE_URL}
-      POSTHOG_API_KEY: ${POSTHOG_API_KEY}
-      POSTHOG_BASE_URL: ${POSTHOG_BASE_URL}
-      POSTHOG_BATCH_SIZE: ${POSTHOG_BATCH_SIZE}
-      POSTHOG_FLUSH_INTERVAL: ${POSTHOG_FLUSH_INTERVAL}
-      AI_TOOLS_BASE_URL: ${AI_TOOLS_BASE_URL}
-      AI_TOOLS_AUTH_HEADER: ${AI_TOOLS_AUTH_HEADER}
-      TRANSPORT_SOCKET_URL: ${TRANSPORT_SOCKET_URL}
-      AUTH_HEADER: ${AUTH_HEADER}
-      SENDGRID_API_KEY: ${SENDGRID_API_KEY}
-      SENDGRID_SENDER_EMAIL: ${SENDGRID_SENDER_EMAIL}
-      SENDGRID_ALERT_RECEIVERS: ${SENDGRID_ALERT_RECEIVERS}
-      SIMILARITY_THRESHOLD: ${SIMILARITY_THRESHOLD}
-      DEFAULT_ALERT_RESPONSE_TIME: ${DEFAULT_ALERT_RESPONSE_TIME}
-      SIMILARITY_LOWER_THRESHOLD: ${SIMILARITY_LOWER_THRESHOLD}
-      ENVIRONMENT: ${ENVIRONMENT}
-      ERROR_RATE_THRESHOLD: ${ERROR_RATE_THRESHOLD}
-      DISCORD_WEBHOOK: ${DISCORD_WEBHOOK}
-      JWKS_URI: ${JWKS_URI}
-      AXIOM_DATASET: ${AXIOM_DATASET}
-      AXIOM_TOKEN: ${AXIOM_TOKEN}
-      AXIOM_ORG_ID: ${AXIOM_ORG_ID}
-      FRONTEND_APPLICATION_ID: ${FRONTEND_APPLICATION_ID}
-      FUSION_AUTH_API_KEY: ${FUSION_AUTH_API_KEY}
-      FUSION_AUTH_BASE_URL: ${FUSION_AUTH_BASE_URL}
+    env_file:
+      - .env
 
-networks:
-  letsencrypt-docker-compose:
-    name: letsencrypt-docker-compose_default
-    external: true
