@@ -39,7 +39,7 @@ services:
     image: bff
     restart: always
     ports:
-      - "0.0.0.0:8081:3000"
+      - "0.0.0.0:3000:3000"
     env_file:
       - .env
 
