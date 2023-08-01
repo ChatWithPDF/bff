@@ -52,7 +52,8 @@ export class AppController {
     return {
       responseType: result.responseType,
       output: result.output,
-      outputInEnglish: result.outputInEnglish
+      outputInEnglish: result.outputInEnglish,
+      context: result.similarDocs
     };
   }
 
