@@ -86,13 +86,19 @@ export const promptServices = {
     },
 
     getSimilarDocs: async(context) => {
-        const similarDocsFromEmbeddingsService =
+        let similarDocsFromEmbeddingsService =
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference,
           pdfId: context.prompt.input.pdfId,
           similarityThreshold: 0,
           matchCount: 10,
         });
+        similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
+            return {
+                ...doc,
+                content:doc.content.replace(/\s{2,}/g, ' ')
+            }
+        })
         console.log("getSimilarDocs", similarDocsFromEmbeddingsService)
         return similarDocsFromEmbeddingsService
     },
@@ -124,7 +130,7 @@ export const promptServices = {
             {
             role: "system",
             content:
-                "You are an AI assistant who answers questions by the context provided. Answer the question asked by the user based on a summary of the context provided. Ignore the context if irrelevant to the question asked.",
+                "You are an AI assistant who answers questions by the context provided. Answer the question asked by the user based on a summary of the context provided. Ignore the context if irrelevant to the question asked. Do not repeat the user question again in the response.",
             },
             {
             role: "user",

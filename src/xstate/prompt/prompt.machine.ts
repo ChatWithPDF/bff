@@ -109,7 +109,7 @@ export const promptMachine = createMachine<PromptContext>({
           onDone: [
             {
               cond: 'isUserHistoryEmpty',
-              target: 'findSimilarQuestion',
+              target: 'getSimilarDocs',
               actions: ['setNeuralCoreferenceAsInput']
             },
             {
@@ -144,7 +144,7 @@ export const promptMachine = createMachine<PromptContext>({
               
             },
             {
-              target: 'findSimilarQuestion',
+              target: 'getSimilarDocs',
               actions: [
                 assign({prompt:(context,_)=>context.prompt,workflow:(context,_)=>context.workflow,stateErrorRateData:{
                   delayThreshold: 4000,

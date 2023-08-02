@@ -142,6 +142,7 @@ export class AiToolsService {
           error: error ? response.error : null
         };
     } catch(error) {
+      console.log("error",error)
       return {response:null, allContent:null, error: error.message? error.message : "Unable to fetch gpt response."}
     }
   }

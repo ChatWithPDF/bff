@@ -53,7 +53,7 @@ export class AppController {
       responseType: result.responseType,
       output: result.output,
       outputInEnglish: result.outputInEnglish,
-      context: result.similarDocs
+      context: result?.similarDocs?.length && result?.similarDocs[0] ? [result?.similarDocs?.length && result?.similarDocs[0]] : []
     };
   }
 
