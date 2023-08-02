@@ -44,8 +44,3 @@ jobs:
           cache-to: type=gha,mode=max
           tags: ${{ env.DOCKER_REGISTRY }}/${{ steps.lower-repo.outputs.repository }}:${{env.DOCKER_IMAGE_TAG}}
           labels: org.opencontainers.image.source=https://github.com/${{steps.lower-repo.outputs.repository}}
-          
-      - name: Invoke deployment hook
-        uses: distributhor/workflow-webhook@v3
-        env:
-          webhook_url: ${{ secrets.WEBHOOK_URL }}
