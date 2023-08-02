@@ -26,7 +26,7 @@ COPY --from=builder /app/package.json ./
 COPY --from=builder /app/yarn.lock ./
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/fileUploads ./fileUploads
+COPY --from=builder /app/files ./files
 
 ARG ENV
 ENV CI_ENV=${ENV}

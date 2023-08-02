@@ -103,7 +103,6 @@ export class EmbeddingsService {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
-    console.log(JSON.stringify(embedding))
     const results = await this.prisma
       .$queryRawUnsafe(`SELECT * FROM match_documents(
         query_embedding := '[${embedding
@@ -124,7 +123,6 @@ export class EmbeddingsService {
       SELECT id, content, tags, CAST(embedding AS TEXT)
       FROM document where id = ${parseInt(`${id}`)}
     `;
-    console.log(document)
       return document[0];
     } catch {
       return null;

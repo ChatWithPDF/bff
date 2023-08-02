@@ -9,7 +9,6 @@ const { Headers } = fetch;
 import { unlink } from 'fs/promises';
 const path = require('path');
 const FormData = require("form-data");
-const Papa = require('papaparse');
 import axios from "axios";
 
 @Injectable()
@@ -208,33 +207,25 @@ export class AiToolsService {
     else return []
   }
 
-  async getPDFChunks(text: string, pdfId: string): Promise<any>{
-    var myHeaders = new Headers();
-    myHeaders.append("Content-Type", "application/json");
-    myHeaders.append(
-      "Authorization",
-      this.configService.get("AI_TOOLS_AUTH_HEADER")
-    );
-    text = text.replace(/\s{2,}/g, ' ')
-    text = text.replace(/\n/g,' ')
-    text = text.replace(`"`,'')
-    var raw = JSON.stringify({
-      text
-    });
-
-    var requestOptions = {
-      method: 'POST',
-      headers: myHeaders,
-      body: raw,
-      redirect: 'follow'
+  async getPDFChunks(filePath: string, pdfId:string): Promise<any>{
+    var formdata = new FormData();
+    filePath = path.join(__dirname, `../../../${filePath}`);
+    formdata.append('file', fs.createReadStream(filePath));
+    let config: any = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${this.configService.get("AI_TOOLS_BASE_URL")}/chunking/MPNet/local/`,
+      headers: { 
+        'Content-Type': 'application/json', 
+        ...formdata.getHeaders()
+      },
+      data : formdata
     };
-    console.log("sending", text)
     try{
-      let response: any = await fetch(`${this.configService.get("AI_TOOLS_BASE_URL")}/chunking/MPNet/local/`, requestOptions)
-      response = await response.text()
-      response = await Papa.parse(response)
-      response = await Papa.unparse(response)
-      const csvFilePath = path.join(__dirname, `../../../fileUploads/${pdfId}.csv`);
+      let response: any = await axios.request(config)
+      response = await response.data
+      await unlink(filePath)
+      const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
       fs.writeFileSync(csvFilePath, response);
     }catch(error){
       console.log('error', error)
@@ -242,12 +233,9 @@ export class AiToolsService {
   }
 
   async getCSVFromChunks(pdfId: string): Promise<any> {
-    var myHeaders = new Headers();
-
     var formdata = new FormData();
-    const csvFilePath = path.join(__dirname, `../../../fileUploads/${pdfId}.csv`);
+    const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
     formdata.append('file', fs.createReadStream(csvFilePath), 'data.csv');
-    console.log(formdata.getHeaders(),myHeaders)
     try{
       const response = await axios.post(
         `${this.configService.get("AI_TOOLS_BASE_URL")}/embeddings/instructor/local/`,

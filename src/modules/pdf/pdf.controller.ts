@@ -53,12 +53,10 @@ export class PDFController {
     })
   )
   async uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body, @Headers() headers) {
-    let pdf_data = await this.pdfService.readPdf(file.path)
-    await unlink(file.path);
     let pdfId = uuidv4()
-    await this.aiToolsService.getPDFChunks(pdf_data,pdfId)
+    await this.aiToolsService.getPDFChunks(file.path,pdfId)
     await this.aiToolsService.getCSVFromChunks(pdfId)
-    const csvFilePath = path.join(__dirname, `../../../fileUploads/${pdfId}.csv`);
+    const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
     let data = await this.pdfService.processCSV(csvFilePath)
     await unlink(csvFilePath)
     for(let i=0;i<data.length;i++){
@@ -67,7 +65,11 @@ export class PDFController {
                 content: data[i].content,
                 pdfId,
                 pdfName: csvFilePath,
-                embeddingType: 'PDF'
+                embeddingType: 'PDF',
+                metaData: {
+                  startPage: data[i].start_page,
+                  endPage: data[i].end_page
+                }
             }
         })
         await this.prisma.$queryRawUnsafe(
