@@ -1,6 +1,6 @@
 import { Controller, Get, Post, Headers, Body, UseInterceptors, Param } from "@nestjs/common";
 import { AppService, Prompt } from "./app.service";
-import { IsNotEmpty,IsUUID, IsOptional } from 'class-validator';
+import { IsNotEmpty,IsUUID, IsOptional, IsArray } from 'class-validator';
 import { interpret } from "xstate";
 import { promptMachine } from "./xstate/prompt/prompt.machine";
 
@@ -16,9 +16,13 @@ export class PromptDto {
   @IsOptional()
   @IsUUID()
   conversationId?: string;
-  @IsNotEmpty()
+  @IsOptional()
   @IsUUID()
-  pdfId: string;
+  pdfId?: string;
+  @IsOptional()
+  @IsArray()
+  @IsUUID('all', { each: true })
+  pdfIds?: string[];
 }
 
 @Controller()
@@ -50,10 +54,10 @@ export class AppController {
     // Stop the state machine
     promptProcessingService.stop();
     return {
-      responseType: result.responseType,
+      neuralCoreferencedQuestion: result.neuralCoreference,
       output: result.output,
       outputInEnglish: result.outputInEnglish,
-      context: result?.similarDocs?.length && result?.similarDocs[0] ? [result?.similarDocs?.length && result?.similarDocs[0]] : []
+      context: result?.similarDocs?.length && result?.similarDocs?.slice(0,2)
     };
   }
 

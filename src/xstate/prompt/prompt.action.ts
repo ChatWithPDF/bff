@@ -2,9 +2,6 @@ import { assign } from 'xstate';
 import {PromptContext} from './prompt.machine'
 import { CONTACT_AMAKRUSHI_HELPLINE, REPHRASE_YOUR_QUESTION } from '../../common/constants';
 import { Language } from '../../language';
-import { TEXT_DETECTION_ERROR } from '../../common/constants';
-import { TEXT_TRANSLATION_ERROR } from '../../common/constants';
-import { GPT_RESPONSE_ERROR } from '../../common/constants';
 import { ConfigService } from '@nestjs/config';
 import { CustomLogger } from '../../common/logger';
 
@@ -227,52 +224,6 @@ export const promptActions = {
       }
     }
   }),
-
-  sendAlert: (context, event) => {
-    let message = context.currentState;
-    let alertMessage;
-    switch(message){
-      case 'unableToDetectLanguage':
-        alertMessage = TEXT_DETECTION_ERROR(
-          context.prompt.input.userId,
-          context.prompt.input.body,
-          JSON.stringify(event.data,null,2)
-        )
-        break;
-      case 'unableToTranslateInput':
-        alertMessage = TEXT_TRANSLATION_ERROR(
-          context.prompt.input.userId,
-          context.prompt.input.body,
-          context.prompt.inputLanguage,
-          'en'
-        )
-        break;
-      case 'unableToTranslateOutput':
-        alertMessage = TEXT_TRANSLATION_ERROR(
-          context.prompt.input.userId,
-          context.prompt.outputInEnglish,
-          'en',
-          context.prompt.inputLanguage
-        )
-        break;
-      case 'neuralCoreferenceIsEmpty':
-        alertMessage = GPT_RESPONSE_ERROR(
-          context.prompt.input.userId,
-          context.prompt.inputTextInEnglish,
-          JSON.stringify(event.data,null,2)
-        )
-        break;
-      case 'gptResponseIsEmpty':
-        alertMessage = GPT_RESPONSE_ERROR(
-          context.prompt.input.userId,
-          context.prompt.inputTextInEnglish,
-          JSON.stringify(event.data,null,2)
-        )
-        break;
-      default:
-        alertMessage = ''
-    }
-  }
 
 };
  

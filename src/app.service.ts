@@ -6,17 +6,6 @@ import { ConfigService } from "@nestjs/config";
 import { EmbeddingsService } from "./modules/embeddings/embeddings.service";
 import { CustomLogger } from "./common/logger";
 import { PromptHistoryService } from "./modules/prompt-history/prompt-history.service";
-import { 
-  CONTACT_AMAKRUSHI_HELPLINE, 
-  GPT_RESPONSE_ERROR, 
-  REPHRASE_YOUR_QUESTION, 
-  TEXT_DETECTION_ERROR, 
-  TEXT_TRANSLATION_ERROR, 
-  UNABLE_TO_DETECT_LANGUAGE, 
-  UNABLE_TO_PROCESS_REQUEST
-} from "./common/constants";
-import { isMostlyEnglish } from "./utils";
-const { performance } = require("perf_hooks");
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 

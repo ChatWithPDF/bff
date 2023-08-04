@@ -84,7 +84,7 @@ export class PromptHistoryService {
                 query_embedding := '[${embedding
                   .map((x) => `${x}`)
                   .join(",")}]',
-                pdfId := '${searchQueryDto.pdfId}',
+                pdfId := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
                 similarity_threshold := ${searchQueryDto.similarityThreshold},
                 match_count := ${searchQueryDto.matchCount}
               );`);

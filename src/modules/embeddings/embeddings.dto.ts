@@ -20,7 +20,7 @@ export class SearchQueryDto {
   query: string;
 
   @IsDefined({ message: "pdfId needs to be defined to search a certain PDF" })
-  pdfId: string;
+  pdfIds: Array<string>;
 
   @IsDefined({ message: "Similarity Threashold needs to be defined" })
   similarityThreshold: number;

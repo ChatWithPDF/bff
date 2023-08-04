@@ -4,8 +4,8 @@ import { EmbeddingsService } from "../../modules/embeddings/embeddings.service";
 import { PromptHistoryService } from "../../modules/prompt-history/prompt-history.service";
 import { AiToolsService } from "../../modules/aiTools/ai-tools.service";
 import { Language } from "../../language";
-import { ResponseForTS } from "../../app.service";
 import { CustomLogger } from "../../common/logger";
+import { chatGPT3Prompt } from "src/common/constants";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
@@ -75,10 +75,15 @@ export const promptServices = {
     },
 
     findSimilarQuestion: async (context) => {
+        let pdfIds = context.prompt.input.pdfId ? 
+                        [context.prompt.input.pdfId] : 
+                        context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
+                        context.prompt.input.pdfIds :
+                        JSON.parse(configService.get('DEFAULT_PDFS'))
         const olderSimilarQuestion =
         await promptHistoryService.findByCriteria({
             query: context.prompt.neuralCoreference,
-            pdfId: context.prompt.input.pdfId,
+            pdfIds,
             similarityThreshold: 0.97,
             matchCount: 1,
         });
@@ -86,10 +91,15 @@ export const promptServices = {
     },
 
     getSimilarDocs: async(context) => {
+        let pdfIds = context.prompt.input.pdfId ? 
+                        [context.prompt.input.pdfId] : 
+                        context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
+                        context.prompt.input.pdfIds :
+                        JSON.parse(configService.get('DEFAULT_PDFS'))
         let similarDocsFromEmbeddingsService =
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference,
-          pdfId: context.prompt.input.pdfId,
+          pdfIds,
           similarityThreshold: 0,
           matchCount: 10,
         });
@@ -104,39 +114,19 @@ export const promptServices = {
     },
 
     generateResponse: async (context) => {
-        const userQuestion =
-        "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
-        const expertContext =
-            "Some expert context is provided in dictionary format here:" +
-            JSON.stringify(
-                context.prompt.similarDocs ? context.prompt.similarDocs
-                .map((doc) => {
-                return {
-                    combined_prompt: doc.tags,
-                    combined_content: doc.content,
-                };
-                }):[]
-            ) +
-            "\n";
-        const chatGPT3PromptWithSimilarDocs = context.prompt.userHistory.length > 0 ?
-            ("Some important elements of the conversation so far between the user and AI have been extracted in a dictionary here: " +
-            context.prompt.userHistory.join("\n") +
-            " " +
-            userQuestion +
-            " " +
-            expertContext) :
-            (context.prompt.neuralCoreference + " " + expertContext);
-        const llmInput = [
-            {
-            role: "system",
-            content:
-                "You are an AI assistant who answers questions by the context provided. Answer the question asked by the user based on a summary of the context provided. Ignore the context if irrelevant to the question asked. Do not repeat the user question again in the response.",
-            },
-            {
-            role: "user",
-            content: chatGPT3PromptWithSimilarDocs,
-            },
-        ]
+        let content = JSON.stringify(
+            context.prompt.similarDocs ? context.prompt.similarDocs
+            .map((doc) => {
+            return {
+                content: doc.content,
+            };
+            }):[]
+        )
+        const llmInput = chatGPT3Prompt(
+            context.prompt.userHistory,
+            context.prompt.neuralCoreference,
+            content
+        )
         const { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(llmInput);
         return { response: finalResponse, allContent: ac, error }
     },
