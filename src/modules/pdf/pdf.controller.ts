@@ -80,4 +80,43 @@ export class PDFController {
     }
     return pdfId;
   }
+
+  @Post('addpdfdata')
+  async addData(){
+    let csvnames = ['farmlandEmbeddings']
+    let pdfIds= [];
+    for(let i=0;i<csvnames.length;i++){
+      let pdfId = uuidv4()
+      const csvFilePath = path.join(__dirname, `../../../files/${csvnames[i]}.csv`);
+      console.log('processing CSV',csvFilePath);
+      let data = await this.pdfService.processCSV(csvFilePath)
+      console.log('CSV processed',csvFilePath)
+      console.log('adding data to db',csvFilePath)
+      for(let i=0;i<data.length;i++){
+        let document = await this.prisma.document.create({
+            data:{
+                content: data[i].content,
+                pdfId,
+                pdfName: csvFilePath,
+                embeddingType: 'PDF',
+                metaData: {
+                  startPage: data[i].start_page,
+                  endPage: data[i].end_page
+                }
+            }
+        })
+        await this.prisma.$queryRawUnsafe(
+            `UPDATE document SET pdf = '[${JSON.parse(data[i].embeddings)
+              .map((x) => `${x}`)
+              .join(",")}]' WHERE id = ${document.id}`
+          );
+      }
+      console.log('data added to db',csvFilePath)
+      pdfIds.push({
+        id:pdfId,
+        name: csvnames[i]
+      })
+    }
+    return pdfIds;
+  }
 }
