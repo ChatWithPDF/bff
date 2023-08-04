@@ -61,6 +61,11 @@ export class AppController {
     };
   }
 
+  @Post("/update/config")
+  async updateConfig(@Body() body:any){
+    return this.appService.createOrUpdateConfig(body)
+  }
+
   @Get("/health/:minutes")
   health(@Param("minutes") minutes: number): any {
     return this.appService.getHealth(parseInt(`${minutes}`));

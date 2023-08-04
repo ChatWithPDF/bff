@@ -82,11 +82,9 @@ model prompt_history {
 model config {
   id        Int      @id @default(autoincrement())
   createdAt DateTime @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime @updatedAt
-  version   Int
-  data      Json
-  question  String
-  answer    String
+  key       String   @unique
+  value     String
+  metaData  Json?
 }
 
 model similarity_search_response {

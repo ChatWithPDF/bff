@@ -117,16 +117,34 @@ export const promptServices = {
         let content = JSON.stringify(
             context.prompt.similarDocs ? context.prompt.similarDocs
             .map((doc) => {
-            return {
-                content: doc.content,
-            };
+            return doc.content;
             }):[]
         )
-        const llmInput = chatGPT3Prompt(
-            context.prompt.userHistory,
-            context.prompt.neuralCoreference,
-            content
-        )
+        let prompt = await prismaService.config.findUnique({ where: { key: "GPTPrompt" } });
+        let llmInput
+        try {
+            if(prompt){
+                llmInput = prompt.value
+                .replace("{{user_history}}",context.prompt.userHistory)
+                .replace("{{user_question}}",context.prompt.neuralCoreference)
+                .replace("{{context}}",content.replace(/"/g,"'"))
+                console.log("llm string",llmInput)
+                llmInput = JSON.parse(llmInput)
+            } else {
+                llmInput = chatGPT3Prompt(
+                    context.prompt.userHistory,
+                    context.prompt.neuralCoreference,
+                    content
+                )
+            }
+        } catch {
+            llmInput = chatGPT3Prompt(
+                context.prompt.userHistory,
+                context.prompt.neuralCoreference,
+                content
+            )
+        }
+        console.log("llmInput",llmInput)
         const { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(llmInput);
         return { response: finalResponse, allContent: ac, error }
     },

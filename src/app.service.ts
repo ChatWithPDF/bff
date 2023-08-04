@@ -85,4 +85,32 @@ export class AppService {
     };
     return response
   }
+
+  async createOrUpdateConfig(body){
+    try {
+      let {key,value,metaData} = body;
+      // Check if the config with the provided key already exists
+      const existingConfig = await this.prisma.config.findUnique({ where: { key } });
+  
+      if (existingConfig) {
+        // If config exists, update its value
+        const updatedConfig = await this.prisma.config.update({
+          where: { key },
+          data: { value, metaData },
+        });
+  
+        return updatedConfig;
+      } else {
+        // If config does not exist, create a new one
+        const newConfig = await this.prisma.config.create({
+          data: { key, value, metaData },
+        });
+  
+        return newConfig;
+      }
+    } catch (error) {
+      console.error('Error occurred:', error);
+      return { error: 'An error occurred while processing the request.' };
+    }
+  }
 }
