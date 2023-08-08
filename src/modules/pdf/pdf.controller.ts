@@ -1,9 +1,9 @@
 import { Body, Controller, Post, UseInterceptors, UploadedFile, UnsupportedMediaTypeException, Headers} from "@nestjs/common";
 import { PDFService } from "./pdf.service";
-import { PrismaService } from "src/global-services/prisma.service";
+import { PrismaService } from "../../global-services/prisma.service";
 const path = require('path');
 import { v4 as uuidv4 } from 'uuid';
-import { FastifyFileInterceptor } from "src/interceptors/file.interceptor";
+import { FastifyFileInterceptor } from "../../interceptors/file.interceptor";
 import { diskStorage } from 'multer';
 import { extname } from 'path';
 import { Request } from 'express';
@@ -83,7 +83,7 @@ export class PDFController {
 
   @Post('addpdfdata')
   async addData(){
-    let csvnames = ['farmlandEmbeddings']
+    let csvnames = ['dafeSchemes']
     let pdfIds= [];
     for(let i=0;i<csvnames.length;i++){
       let pdfId = uuidv4()
