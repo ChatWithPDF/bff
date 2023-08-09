@@ -35,7 +35,7 @@ export class AppController {
   }
 
   @Post("/prompt")
-  async prompt(@Body() promptDto: PromptDto, @Headers() headers): Promise<any> {
+  async prompt(@Body() promptDto: PromptDto): Promise<any> {
     let prompt: Prompt = {
       input: promptDto,
     };
@@ -54,6 +54,7 @@ export class AppController {
     // Stop the state machine
     promptProcessingService.stop();
     return {
+      id: result.input.messageId,
       neuralCoreferencedQuestion: result.neuralCoreference,
       output: result.output,
       outputInEnglish: result.outputInEnglish,

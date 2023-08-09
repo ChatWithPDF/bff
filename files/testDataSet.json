@@ -1,0 +1,10 @@
+[
+    {
+      "question": "What is 2 + 2?",
+      "expectedAnswer": "4"
+    },
+    {
+      "question": "What is the capital of France?",
+      "expectedAnswer": "Paris"
+    }
+]

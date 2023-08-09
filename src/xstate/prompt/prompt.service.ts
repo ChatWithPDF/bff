@@ -5,7 +5,7 @@ import { PromptHistoryService } from "../../modules/prompt-history/prompt-histor
 import { AiToolsService } from "../../modules/aiTools/ai-tools.service";
 import { Language } from "../../language";
 import { CustomLogger } from "../../common/logger";
-import { chatGPT3Prompt } from "src/common/constants";
+import { chatGPT3Prompt } from "../../common/constants";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
