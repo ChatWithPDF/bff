@@ -11,6 +11,7 @@ import { APP_PIPE } from "@nestjs/core";
 import { CustomLogger } from "./common/logger";
 import { AiToolsService } from "./modules/aiTools/ai-tools.service";
 import { PDFModule } from "./modules/pdf/pdf.module";
+import { AiToolsModule } from "./modules/aiTools/ai-tools.module";
 
 @Module({
   imports: [
@@ -18,6 +19,7 @@ import { PDFModule } from "./modules/pdf/pdf.module";
     EmbeddingsModule,
     UserModule,
     PDFModule,
+    AiToolsModule
   ],
   controllers: [AppController],
   providers: [

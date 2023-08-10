@@ -250,4 +250,27 @@ export class AiToolsService {
     }
   }
 
+  async asr(filePath: string): Promise<string>{
+    var formdata = new FormData();
+    filePath = path.join(__dirname, `../../../${filePath}`);
+    formdata.append('file', fs.createReadStream(filePath));
+    let config: any = {
+      method: 'post',
+      maxBodyLength: Infinity,
+      url: `${this.configService.get("AI_TOOLS_BASE_URL")}/asr/fairseq_mms/local/`,
+      headers: { 
+        'Content-Type': 'application/json', 
+        ...formdata.getHeaders()
+      },
+      data : formdata
+    };
+    try{
+      let response: any = await axios.request(config)
+      response = await response.data
+      await unlink(filePath)
+      return response
+    }catch(error){
+      console.log('error', error)
+    }
+  }
 }
