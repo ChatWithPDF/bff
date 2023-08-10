@@ -89,7 +89,7 @@ export class AiToolsService {
       headers: myHeaders,
       body: raw.replace('"unk\"','"or\"'),
     };
-    let translateURL = 'text_translation/bhashini/remote/';
+    let translateURL = 'text_translation/azure/remote/';
     translateURL = `${this.configService.get("AI_TOOLS_BASE_URL")}/${translateURL}`
     try {
       let response = await fetch(
