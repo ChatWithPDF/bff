@@ -268,7 +268,25 @@ export class AiToolsService {
       let response: any = await axios.request(config)
       response = await response.data
       await unlink(filePath)
-      return response
+      var myHeaders = new Headers();
+      myHeaders.append("Content-Type", "application/json");
+      var raw = JSON.stringify({
+        "text": response,
+        "BEAM_WIDTH": 5,
+        "SCORE_THRESHOLD": 1.5,
+        "max_distance": 1
+      });
+
+      var requestOptions = {
+        method: 'POST',
+        headers: myHeaders,
+        body: raw,
+        redirect: 'follow'
+      };
+
+      let res = await fetch(`${this.configService.get("AI_TOOLS_BASE_URL")}/spell_check/kenlm/local/`, requestOptions)
+      res = await res.text()
+      return res
     }catch(error){
       console.log('error', error)
     }
