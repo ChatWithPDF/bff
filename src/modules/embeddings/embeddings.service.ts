@@ -20,7 +20,7 @@ export class EmbeddingsService {
     private promptHistoryService: PromptHistoryService,
     private aiToolsService: AiToolsService
   ) {
-    this.aiToolsService = new AiToolsService(configService)
+    this.aiToolsService = new AiToolsService(configService, prisma)
   }
 
   async findAll(page: number, perPage: number) : Promise<DocumentsResponse>{

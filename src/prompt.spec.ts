@@ -30,7 +30,7 @@ describe('API Testing', () => {
     await app.init();
     prismaService = new PrismaService();
     configService = new ConfigService();
-    aiToolsService = new AiToolsService(configService);
+    aiToolsService = new AiToolsService(configService,prismaService);
     if (process.env.RUN_MANUAL_TEST === 'true') {
       workbook = new ExcelJS.Workbook();
       worksheet = workbook.addWorksheet('Test Report');

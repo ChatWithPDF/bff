@@ -23,7 +23,7 @@ export class PromptHistoryService {
     private aiToolsService: AiToolsService
   ) {
     this.logger = new CustomLogger("PromptHistoryService");
-    this.aiToolsService = new AiToolsService(configService)
+    this.aiToolsService = new AiToolsService(configService, prisma)
   }
   async createOrUpdate(data: CreatePromptDto): Promise<PromptHistory> {
     let olderDocument;

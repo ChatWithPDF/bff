@@ -10,12 +10,14 @@ import { unlink } from 'fs/promises';
 const path = require('path');
 const FormData = require("form-data");
 import axios from "axios";
+import { PrismaService } from 'src/global-services/prisma.service';
 
 @Injectable()
 export class AiToolsService {
   private logger: CustomLogger;
   constructor(
-    private configService: ConfigService
+    private configService: ConfigService,
+    private prismaService: PrismaService
   ) {
     this.logger = new CustomLogger("AiToolsService");
   }
@@ -267,7 +269,6 @@ export class AiToolsService {
     try{
       let response: any = await axios.request(config)
       response = await response.data
-      await unlink(filePath)
       var myHeaders = new Headers();
       myHeaders.append("Content-Type", "application/json");
       var raw = JSON.stringify({
@@ -286,9 +287,28 @@ export class AiToolsService {
 
       let res = await fetch(`${this.configService.get("AI_TOOLS_BASE_URL")}/spell_check/kenlm/local/`, requestOptions)
       res = await res.text()
+      const base64Audio = await this.convertToBase64(filePath);
+      await this.prismaService.speech_to_text.create({
+        data:{
+          audio: base64Audio,
+          text: response,
+          spell_corrected_text: res 
+        }
+      })
+      await unlink(filePath)
       return res
     }catch(error){
       console.log('error', error)
+    }
+  }
+
+  async convertToBase64(filePath: string): Promise<string> {
+    try {
+      const audioBuffer = await fs.promises.readFile(filePath);
+      const base64Encoded = audioBuffer.toString('base64');
+      return base64Encoded;
+    } catch (error) {
+      throw new Error('Error converting audio to base64: ' + error.message);
     }
   }
 }

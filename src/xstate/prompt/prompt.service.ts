@@ -11,7 +11,7 @@ const { Headers } = fetch;
 
 const prismaService = new PrismaService()
 const configService = new ConfigService()
-const aiToolsService = new AiToolsService(configService)
+const aiToolsService = new AiToolsService(configService, prismaService)
 const promptHistoryService = new PromptHistoryService(
     prismaService,
     configService,

@@ -14,7 +14,7 @@ export class PDFService {
     private aiToolsService: AiToolsService,
     // private pdfParser: PDFParser
   ) {
-    this.aiToolsService = new AiToolsService(configService)
+    this.aiToolsService = new AiToolsService(configService, prisma)
   }
   async processCSV(csvBuffer: any): Promise<Array<any>> {
     const data= [];

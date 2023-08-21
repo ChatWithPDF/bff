@@ -95,3 +95,10 @@ model similarity_search_response {
   similarity     Float
   queryId        String  @db.Uuid
 }
+
+model speech_to_text {
+  id                      Int      @id @default(autoincrement())
+  audio                   String
+  text                    String
+  spell_corrected_text    String
+}

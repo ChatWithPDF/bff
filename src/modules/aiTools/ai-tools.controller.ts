@@ -5,6 +5,7 @@ import { extname } from 'path';
 import { Request } from 'express';
 import { AiToolsService } from "../aiTools/ai-tools.service";
 import { ConfigService } from "@nestjs/config";
+import { PrismaService } from "src/global-services/prisma.service";
 
 const editFileName = (req: Request, file: Express.Multer.File, callback) => {
   const name = file.originalname.split('.')[0];
@@ -31,9 +32,10 @@ export const imageFileFilter = (
 export class AIToolsController {
     constructor(
         private configService: ConfigService,
-        private aiToolsService: AiToolsService
+        private aiToolsService: AiToolsService,
+        private prismaService: PrismaService
     ){
-        this.aiToolsService = new AiToolsService(configService) 
+        this.aiToolsService = new AiToolsService(configService, prismaService) 
     }
 
     @Post('asr')

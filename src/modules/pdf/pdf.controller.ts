@@ -40,7 +40,7 @@ export class PDFController {
     private configService: ConfigService,
     private aiToolsService: AiToolsService,
   ) {
-    this.aiToolsService = new AiToolsService(configService)
+    this.aiToolsService = new AiToolsService(configService, prisma)
   }
   @Post('upload')
   @UseInterceptors(
