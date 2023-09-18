@@ -133,7 +133,7 @@ export class AiToolsService {
 
     try {
       let response: any = await fetch(
-        `${this.configService.get("AKAI_AI_TOOLS_BASE_URL")}/llm/openai/chatgpt3`,
+        `${this.configService.get("AI_TOOLS_BASE_URL")}/llm/openai/chatgpt3/`,
         requestOptions
       )
       response = await response.json()
