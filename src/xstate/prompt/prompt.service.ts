@@ -5,7 +5,7 @@ import { PromptHistoryService } from "../../modules/prompt-history/prompt-histor
 import { AiToolsService } from "../../modules/aiTools/ai-tools.service";
 import { Language } from "../../language";
 import { CustomLogger } from "../../common/logger";
-import { chatGPT3Prompt } from "../../common/constants";
+import { chatGPT3Prompt, generalPrompt } from "../../common/constants";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
@@ -114,39 +114,29 @@ export const promptServices = {
     },
 
     generateResponse: async (context) => {
-        let content = JSON.stringify(
-            context.prompt.similarDocs ? context.prompt.similarDocs
-            .map((doc) => {
-            return doc.content;
-            }):[]
-        )
-        let prompt = await prismaService.config.findUnique({ where: { key: "GPTPrompt" } });
-        let llmInput
         try {
-            if(prompt){
-                llmInput = prompt.value
-                .replace("{{user_history}}",context.prompt.userHistory)
-                .replace("{{user_question}}",context.prompt.neuralCoreference)
-                .replace("{{context}}",content.replace(/"/g,"'"))
-                console.log("llm string",llmInput)
-                llmInput = JSON.parse(llmInput)
-            } else {
-                llmInput = chatGPT3Prompt(
-                    context.prompt.userHistory,
-                    context.prompt.neuralCoreference,
-                    content
-                )
-            }
-        } catch {
-            llmInput = chatGPT3Prompt(
-                context.prompt.userHistory,
-                context.prompt.neuralCoreference,
-                content
-            )
+            const userQuestion =
+            "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
+            const expertContext =
+                "Some expert context is provided in dictionary format here, do not use this if it not related to user question:" +
+                JSON.stringify(
+                    context.prompt.similarDocs ? context.prompt.similarDocs
+                    .map((doc) => {
+                    return {
+                        combined_prompt: doc.tags,
+                        combined_content: doc.content,
+                    };
+                    }):[]
+                ) +
+                "\n";
+            let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference)
+            console.log("prompt sent", prompt)
+
+            const { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
+            return { response: finalResponse, allContent: ac, error }
+        } catch(error){
+            console.log(error)
         }
-        console.log("llmInput",llmInput)
-        const { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(llmInput);
-        return { response: finalResponse, allContent: ac, error }
     },
 
     translateOutput: async (context) => {
