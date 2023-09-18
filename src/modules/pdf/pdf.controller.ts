@@ -83,7 +83,7 @@ export class PDFController {
 
   @Post('addpdfdata')
   async addData(){
-    let csvnames = ['dafeSchemes']
+    let csvnames = ['leave']
     let pdfIds= [];
     for(let i=0;i<csvnames.length;i++){
       let pdfId = uuidv4()
