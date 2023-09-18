@@ -53,6 +53,7 @@
     "fastify-multipart": "^5.4.0",
     "fastify-static": "^4.7.0",
     "flagsmith-nodejs": "^2.5.2",
+    "fluent-ffmpeg": "^2.1.2",
     "isomorphic-fetch": "^3.0.0",
     "jest-mock-extended": "^3.0.4",
     "jsonwebtoken": "^9.0.0",

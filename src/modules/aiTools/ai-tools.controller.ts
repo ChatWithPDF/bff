@@ -49,6 +49,6 @@ export class AIToolsController {
         })
     )
     async uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body, @Headers() headers) {
-       return await this.aiToolsService.asr(file.path)
+       return await this.aiToolsService.asr(file.path, body)
     }
 }

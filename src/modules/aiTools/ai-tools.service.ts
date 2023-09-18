@@ -11,6 +11,7 @@ const path = require('path');
 const FormData = require("form-data");
 import axios from "axios";
 import { PrismaService } from 'src/global-services/prisma.service';
+const ffmpeg = require('fluent-ffmpeg');
 
 @Injectable()
 export class AiToolsService {
@@ -252,53 +253,156 @@ export class AiToolsService {
     }
   }
 
-  async asr(filePath: string): Promise<string>{
-    var formdata = new FormData();
-    filePath = path.join(__dirname, `../../../${filePath}`);
-    formdata.append('file', fs.createReadStream(filePath));
-    let config: any = {
-      method: 'post',
-      maxBodyLength: Infinity,
-      url: `${this.configService.get("AI_TOOLS_BASE_URL")}/asr/fairseq_mms/local/`,
-      headers: { 
-        'Content-Type': 'application/json', 
-        ...formdata.getHeaders()
-      },
-      data : formdata
+  async getBhashiniConfig(task,config) {
+    var myHeaders = new Headers();
+    myHeaders.append("userID", this.configService.get("ULCA_USER_ID"));
+    myHeaders.append("ulcaApiKey", this.configService.get("ULCA_API_KEY"));
+    myHeaders.append("Content-Type", "application/json");
+
+    var raw = JSON.stringify({
+      "pipelineTasks": [
+        {
+          "taskType": task,
+          "config": config
+        }
+      ],
+      "pipelineRequestConfig": {
+        "pipelineId": "64392f96daac500b55c543cd"
+      }
+    });
+
+    var requestOptions: any = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
     };
     try{
-      let response: any = await axios.request(config)
-      response = await response.data
-      var myHeaders = new Headers();
-      myHeaders.append("Content-Type", "application/json");
-      var raw = JSON.stringify({
-        "text": response,
-        "BEAM_WIDTH": 5,
-        "SCORE_THRESHOLD": 1.5,
-        "max_distance": 1
-      });
+      console.log(`${new Date()}: Waiting for ${this.configService.get("ULCA_CONFIG_URL")} (config API) to respond ...`)
+      let response  = await fetch(this.configService.get("ULCA_CONFIG_URL"), requestOptions)
+      if(response.status != 200){
+        console.log(response)
+        throw new Error(`${new Date()}: API call to '${this.configService.get("ULCA_CONFIG_URL")}' with config '${JSON.stringify(config,null,3)}' failed with status code ${response.status}`)
+      }
+      response = await response.json()
+      console.log(`${new Date()}: Responded succesfully`)
+      return response
+    } catch(error) {
+      console.log(error);
+      return {
+        error
+      }
+    }
+  }
 
-      var requestOptions = {
-        method: 'POST',
-        headers: myHeaders,
-        body: raw,
-        redirect: 'follow'
-      };
-
-      let res = await fetch(`${this.configService.get("AI_TOOLS_BASE_URL")}/spell_check/kenlm/local/`, requestOptions)
-      res = await res.text()
-      const base64Audio = await this.convertToBase64(filePath);
-      await this.prismaService.speech_to_text.create({
-        data:{
-          audio: base64Audio,
-          text: response,
-          spell_corrected_text: res 
+  async computeBhashini(authorization, task, serviceId, url, config, input) {
+    var myHeaders = new Headers();
+    myHeaders.append("Accept", " */*");
+    myHeaders.append("Authorization", authorization);
+    myHeaders.append("Content-Type", "application/json");
+    config['serviceId']=serviceId
+    if(task == 'tts'){
+      config['gender']='male'
+      config['samplingRate']=8000
+    }
+    var raw = JSON.stringify({
+      "pipelineTasks": [
+        {
+          "taskType": task,
+          "config": config
         }
-      })
-      await unlink(filePath)
-      return res
-    }catch(error){
-      console.log('error', error)
+      ],
+      "inputData": input
+    });
+
+    var requestOptions: any = {
+      method: 'POST',
+      headers: myHeaders,
+      body: raw,
+      redirect: 'follow'
+    };
+
+    try{
+      console.log(`${new Date()}: Waiting for ${url} for task (${task}) to respond ...`)
+      let response  = await fetch(url, requestOptions)
+      if(response.status != 200){
+        console.log(response)
+        throw new Error(`${new Date()}: API call to '${url}' with config '${JSON.stringify(config,null,3)}' failed with status code ${response.status}`)
+      }
+      response = await response.json()
+      console.log(`${new Date()}: Responded succesfully.`)
+      return response
+    } catch(error) {
+      console.log(error);
+      return {
+        error
+      }
+    }
+  }
+
+  convertAudioAsync(inputFileName, outputFileName) {
+    return new Promise((resolve, reject) => {
+      ffmpeg()
+        .input(inputFileName)
+        .audioCodec('pcm_s16le')
+        .audioChannels(2) // Adjust the number of audio channels if needed
+        .on('end', () => {
+          console.log('Conversion finished.');
+          resolve(0);
+        })
+        .on('error', (err) => {
+          console.error('Error:', err);
+          reject(err);
+        })
+        .save(outputFileName);
+    });
+  }
+
+  async asr(filePath: string, body): Promise<any> {
+    var formdata = new FormData();
+    filePath = path.join(__dirname, `../../../${filePath}`);
+
+    await this.convertAudioAsync(filePath, path.join(__dirname, `../../../modified.wav`));
+    await unlink(filePath)
+    filePath = path.join(__dirname, `../../../modified.wav`)
+
+    formdata.append('file', fs.createReadStream(filePath));
+    const base64Audio = await this.convertToBase64(filePath);
+    await unlink(filePath)
+    let config: any = await this.getBhashiniConfig(body.model,{
+      "language": {
+          "sourceLanguage": body.language
+      }
+    })
+
+    let response: any = await this.computeBhashini(
+      config?.pipelineInferenceAPIEndPoint?.inferenceApiKey?.value,
+      "asr",
+      config?.pipelineResponseConfig[0].config[0].serviceId,
+      config?.pipelineInferenceAPIEndPoint?.callbackUrl,
+      {
+        "language": {
+            "sourceLanguage": body.language
+        },
+        "postProcessors": [
+          "itn"
+        ],
+      },
+      {
+        "audio":[
+          {
+            "audioContent": base64Audio
+          }
+        ]
+      }
+    )
+    if(response["error"]){
+      console.log(response["error"])
+      throw new Error(response["error"])
+    }
+    return {
+      text: response?.pipelineResponse[0]?.output[0]?.source,
+      error: null
     }
   }
 
