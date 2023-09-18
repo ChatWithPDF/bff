@@ -21,6 +21,8 @@ FROM node:16
 
 WORKDIR /app
 
+RUN apt update && apt install -y ffmpeg
+
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package.json ./
 COPY --from=builder /app/yarn.lock ./
