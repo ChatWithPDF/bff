@@ -96,6 +96,7 @@ export const promptServices = {
                         context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
                         context.prompt.input.pdfIds :
                         JSON.parse(configService.get('DEFAULT_PDFS'))
+        console.log("similar docs -",pdfIds)
         let similarDocsFromEmbeddingsService =
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference,
@@ -157,27 +158,28 @@ export const promptServices = {
     },
 
     storeAndSendMessage: async (context) => {
-        await promptHistoryService.createOrUpdate({
-            id: context.prompt.similarQuestion ? context.prompt.similarQuestion[0].id : null,
-            queryInEnglish: context.prompt.inputTextInEnglish,
-            responseInEnglish: context.prompt.outputInEnglish,
-            responseTime: new Date().getTime() - context.prompt.timestamp,
-            metadata: [],
-            queryId: context.prompt.input.messageId,
-            pdfId: context.prompt.input.pdfId,
-        });
-
-        // if(context.prompt.similarDocs && context.prompt.similarDocs.length > 0){
-        //     let similarDocsCreateData = context.prompt.similarDocs.map(e=>{
-        //       e['queryId'] = context.prompt.input.messageId
-        //       e['documentId'] = e.id
-        //       delete e.id
-        //       return e
-        //     })
-        //     await prismaService.similarity_search_response.createMany({
-        //       data: similarDocsCreateData
-        //     })
-        // }
+        // await promptHistoryService.createOrUpdate({
+        //     id: context.prompt.similarQuestion ? context.prompt.similarQuestion[0].id : null,
+        //     queryInEnglish: context.prompt.inputTextInEnglish,
+        //     responseInEnglish: context.prompt.outputInEnglish,
+        //     responseTime: new Date().getTime() - context.prompt.timestamp,
+        //     metadata: [],
+        //     queryId: context.prompt.input.messageId,
+        //     pdfId: context.prompt.input.pdfId,
+        // });
+        if(context.prompt.similarDocs && context.prompt.similarDocs.length > 0){
+            let similarDocsCreateData = context.prompt.similarDocs.map(e=>{
+              e['queryId'] = context.prompt.input.messageId
+              e['documentId'] = e.id
+              delete e.pdfId
+              delete e.id
+              delete e.metaData
+              return e
+            })
+            await prismaService.similarity_search_response.createMany({
+              data: similarDocsCreateData
+            })
+        }
 
         return context
     },

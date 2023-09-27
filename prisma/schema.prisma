@@ -91,7 +91,7 @@ model similarity_search_response {
   id             Int      @id @default(autoincrement())
   documentId     Int
   content        String
-  tags           String
+  tags           String?
   similarity     Float
   queryId        String  @db.Uuid
 }
