@@ -34,7 +34,8 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
       {
           role: "system",
           content:
-              `You are a helpful assistant who helps with answering questions based on the provided information.  Consider the user question critically. For example if they ask how many leaves they have remaining, check how many leaves they are provided each year, how many they have taken and how many are carried over from last year and calculate the number of leaves that are remaining that they can take based on calculations provided. 
+              `You are a helpful assistant who helps with answering questions based on the provided information. Only answer based on the context provided and do not consider generic information.
+              Consider the user question critically and break down the questions into steps before answering the questions.  
               ${expertContext}
               `,
       }
