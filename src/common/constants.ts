@@ -34,8 +34,8 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
       {
           role: "system",
           content:
-              `You are an AI assistant who answers questions by the context provided. Answer my current question provided below based on a summary of the context provided. Ignore the context if irrelevant to the question asked. Do not repeat the question again in the response otherwise people will die. And only just give the answer as the output, if you are unable to find any relevant information in the context provided just ignore the context and give a generic response. And do not answer question as a third persons perspective, answer the question as if you are talking to the user directly.
-
+              `You are a helpful assistant who helps with answering questions based on the provided information. Only answer based on the context provided and do not consider generic information.
+              Consider the user question critically and break down the questions into steps before answering the questions.  
               ${expertContext}
               `,
       }
