@@ -103,6 +103,14 @@ export class EmbeddingsService {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
+    console.log("#debug-query",`SELECT * FROM match_documents(
+      query_embedding := '[${embedding
+        .map((x) => `${x}`)
+        .join(",")}]',
+      pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
+      similarity_threshold := ${searchQueryDto.similarityThreshold},
+      match_count := ${searchQueryDto.matchCount}
+    );`)
     const results = await this.prisma
       .$queryRawUnsafe(`SELECT * FROM match_documents(
         query_embedding := '[${embedding
@@ -112,7 +120,7 @@ export class EmbeddingsService {
         similarity_threshold := ${searchQueryDto.similarityThreshold},
         match_count := ${searchQueryDto.matchCount}
       );`);
-
+      console.log("#debug-response",results)
 
     return results;
   }
