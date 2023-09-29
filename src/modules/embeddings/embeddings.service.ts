@@ -103,24 +103,43 @@ export class EmbeddingsService {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
-    console.log("#debug-query",`SELECT * FROM match_documents(
-      query_embedding := '[${embedding
-        .map((x) => `${x}`)
-        .join(",")}]',
-      pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
-      similarity_threshold := ${searchQueryDto.similarityThreshold},
-      match_count := ${searchQueryDto.matchCount}
-    );`)
+    let query_embedding = `[${embedding
+      .map((x) => `${x}`)
+      .join(",")}]`
+    let pdfIds = `ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}]`
+    let similarity_threshold = searchQueryDto.similarityThreshold
+    let match_count = searchQueryDto.matchCount
+
+    // const results = await this.prisma
+    //   .$queryRawUnsafe(`SELECT * FROM match_documents(
+    //     query_embedding := '[${embedding
+    //       .map((x) => `${x}`)
+    //       .join(",")}]',
+    //     pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
+    //     similarity_threshold := ${searchQueryDto.similarityThreshold},
+    //     match_count := ${searchQueryDto.matchCount}
+    //   );`);
+
     const results = await this.prisma
-      .$queryRawUnsafe(`SELECT * FROM match_documents(
-        query_embedding := '[${embedding
-          .map((x) => `${x}`)
-          .join(",")}]',
-        pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
-        similarity_threshold := ${searchQueryDto.similarityThreshold},
-        match_count := ${searchQueryDto.matchCount}
-      );`);
-      console.log("#debug-response",results)
+    .$queryRawUnsafe(`
+      SELECT
+      document.id as id,
+      document.content as content,
+      document.tags as tags,
+      1 - (document.pdf <=> '${query_embedding}') as similarity,
+      document."pdfId" as "pdfId",
+      document."metaData" as "metaData"
+      FROM
+        document
+      WHERE 
+        document."pdfId"::text = ANY(${pdfIds})
+        AND 1 - (document.pdf <=> '${query_embedding}') > ${similarity_threshold}
+      ORDER BY
+        document.pdf <=> '${query_embedding}'
+      LIMIT ${match_count};`
+    );
+
+    console.log("#debug-response",results)
 
     return results;
   }
