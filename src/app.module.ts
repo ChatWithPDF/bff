@@ -12,6 +12,7 @@ import { CustomLogger } from "./common/logger";
 import { AiToolsService } from "./modules/aiTools/ai-tools.service";
 import { PDFModule } from "./modules/pdf/pdf.module";
 import { AiToolsModule } from "./modules/aiTools/ai-tools.module";
+import { FeedbackModule } from "./modules/feedback/feedback.module";
 
 @Module({
   imports: [
@@ -19,7 +20,8 @@ import { AiToolsModule } from "./modules/aiTools/ai-tools.module";
     EmbeddingsModule,
     UserModule,
     PDFModule,
-    AiToolsModule
+    AiToolsModule,
+    FeedbackModule
   ],
   controllers: [AppController],
   providers: [
