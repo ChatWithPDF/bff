@@ -35,7 +35,8 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
           role: "system",
           content:
               `You are a helpful assistant who helps with answering questions based on the provided information. Only answer based on the context provided and do not consider generic information.
-              Consider the user question critically and break down the questions into steps before answering the questions.  
+              Consider the user question critically and break down the questions into steps before answering the questions. 
+              NOTE: Please do not mention existance on context in the answer. And also do not add "AI: " suffix to the answer. 
               ${expertContext}
               `,
       }
@@ -43,7 +44,7 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
   history.forEach(text => {
       input.push({
           role: text.indexOf('User:') != -1 ? "user": "assistant",
-          content: text
+          content: text.replace('User:','').replace('AI: ','').trim()
       })
   });
   input.pop()

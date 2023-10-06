@@ -124,7 +124,6 @@ export class AiToolsService {
     var raw = JSON.stringify({
       prompt: prompt,
     });
-    console.log(raw)
 
     var requestOptions = {
       method: "POST",

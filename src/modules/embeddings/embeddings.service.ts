@@ -139,8 +139,6 @@ export class EmbeddingsService {
       LIMIT ${match_count};`
     );
 
-    console.log("#debug-response",results)
-
     return results;
   }
 

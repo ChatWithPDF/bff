@@ -52,13 +52,17 @@ export const promptServices = {
     getUserHistory: async (context) => {
         let userHistoryWhere: any = {};
         userHistoryWhere.userId = context.prompt.input.userId;
+        userHistoryWhere.queryInEnglish = {
+            not: context.prompt.input.body
+        }
         if(context.prompt.input.conversationId) userHistoryWhere.conversationId = context.prompt.input.conversationId;
         const userHistory = await prismaService.query.findMany({
+            distinct:['queryInEnglish'],
             where: userHistoryWhere,
             orderBy: {
                 createdAt: "desc",
             },
-            take: 2,
+            take: 3,
         });
         let history = []
         for (let i = 0; i < userHistory.length; i++) {
@@ -96,7 +100,6 @@ export const promptServices = {
                         context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
                         context.prompt.input.pdfIds :
                         JSON.parse(configService.get('DEFAULT_PDFS'))
-        console.log("similar docs -",pdfIds)
         let similarDocsFromEmbeddingsService =
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference,
@@ -110,7 +113,6 @@ export const promptServices = {
                 content:doc.content.replace(/\s{2,}/g, ' ')
             }
         })
-        console.log("getSimilarDocs", similarDocsFromEmbeddingsService)
         return similarDocsFromEmbeddingsService
     },
 
@@ -131,9 +133,10 @@ export const promptServices = {
                 ) +
                 "\n";
             let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference)
-            console.log("prompt sent", prompt)
-
-            const { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
+            let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
+            finalResponse = finalResponse.replace("AI: ",'')
+                                         .replace('Based on the context provided ','')
+                                         .replace('According to the context provided ','')
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
