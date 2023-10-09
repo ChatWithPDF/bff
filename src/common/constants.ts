@@ -1,3 +1,5 @@
+import * as moment from "moment";
+
 export const REPHRASE_YOUR_QUESTION = (inputLanguage) =>
 inputLanguage && inputLanguage == 'en' ? "Please try rephrasing your question or try again later." :
 "ଦୟାକରି ଆପଣଙ୍କର ପ୍ରଶ୍ନର ପୁନରାବୃତ୍ତି କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |";
@@ -34,9 +36,10 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
       {
           role: "system",
           content:
-              `You are a helpful assistant who helps with answering questions based on the provided information. Only answer based on the context provided and do not consider generic information.
+              `You are a helpful assistant who helps with answering questions for Samagra employees based on the provided information. Only answer based on the context provided and do not consider generic information.
               Consider the user question critically and break down the questions into steps before answering the questions. 
               NOTE: Please do not mention existance on context in the answer. And also do not add "AI: " suffix to the answer. 
+              Meta Data: Today's date: ${moment().format('DD-MM-YYYY')}
               ${expertContext}
               `,
       }
