@@ -136,11 +136,13 @@ export const promptServices = {
             let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
             finalResponse = finalResponse.replace("AI: ",'')
                                          .replace('Based on the context provided ','')
+                                         .replace("Based on the context provided, ",'')
                                          .replace('According to the context provided ','')
-                                         .replace('Based on the information provided,', '')
-                                         .replace('Based on the provided context,','')
-                                         .replace('Based on the information provided', '')
-                                         .replace('Based on the provided context','')
+                                         .replace('According to the context provided, ','')
+                                         .replace('Based on the information provided ', '')
+                                         .replace('Based on the information provided, ', '')
+                                         .replace('Based on the provided context, ','')
+                                         .replace('Based on the provided context ','')
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
