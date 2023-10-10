@@ -105,7 +105,7 @@ export const promptServices = {
           query: context.prompt.neuralCoreference,
           pdfIds,
           similarityThreshold: 0,
-          matchCount: 10,
+          matchCount: 2,
         });
         similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
             return {
@@ -118,20 +118,11 @@ export const promptServices = {
 
     generateResponse: async (context) => {
         try {
-            const userQuestion =
-            "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
-            const expertContext =
-                "Some expert context is provided in dictionary format here, do not use this if it not related to user question:" +
-                JSON.stringify(
-                    context.prompt.similarDocs ? context.prompt.similarDocs
-                    .map((doc) => {
-                    return {
-                        combined_prompt: doc.tags,
-                        combined_content: doc.content,
-                    };
-                    }):[]
-                ) +
-                "\n";
+            const userQuestion = "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
+            let expertContext = "Some expert context is provided below, do not use this if it not related to user question:\n"
+            context.prompt.similarDocs && context.prompt.similarDocs.forEach((doc)=> {
+                expertContext+=`${doc.id}. ${doc.content}\n`
+            })
             let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference)
             let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
             finalResponse = finalResponse.replace("AI: ",'')

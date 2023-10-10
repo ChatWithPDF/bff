@@ -39,7 +39,10 @@ export const generalPrompt = (history, expertContext, userQuestion, neuralCorefe
               `You are a helpful assistant who helps with answering questions for Samagra employees based on the provided information. Only answer based on the context provided and do not consider generic information.
               Consider the user question critically and break down the questions into steps before answering the questions. 
               NOTE: Please do not mention existance on context in the answer. And also do not add "AI: " suffix to the answer. 
-              Meta Data: Today's date: ${moment().format('DD-MM-YYYY')}
+              Below are some usefull data for answering user question:
+              Today's date: ${moment().format('MMM DD, YYYY dddd')}
+              User region: India
+              User organization: Samagra
               ${expertContext}
               `,
       }
