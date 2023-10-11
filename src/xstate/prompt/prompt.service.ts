@@ -106,7 +106,7 @@ export const promptServices = {
           query: context.prompt.neuralCoreference,
           pdfIds,
           similarityThreshold: 0,
-          matchCount: 2,
+          matchCount: 10,
         });
         similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
             return {

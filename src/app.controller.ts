@@ -58,7 +58,7 @@ export class AppController {
       neuralCoreferencedQuestion: result.neuralCoreference,
       output: result.output,
       outputInEnglish: result.outputInEnglish,
-      context: result?.similarDocs?.length && result?.similarDocs?.slice(0,2)
+      context: result?.similarDocs?.length && result?.similarDocs
     };
   }
 
