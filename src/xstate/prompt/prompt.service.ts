@@ -169,7 +169,8 @@ export const promptServices = {
         //     pdfId: context.prompt.input.pdfId,
         // });
         if(context.prompt.similarDocs && context.prompt.similarDocs.length > 0){
-            let similarDocsCreateData = context.prompt.similarDocs.map(e=>{
+            let data = JSON.parse(JSON.stringify(context.prompt.similarDocs))
+            let similarDocsCreateData = data.map(e=>{
               e['queryId'] = context.prompt.input.messageId
               e['documentId'] = e.id
               delete e.pdfId
