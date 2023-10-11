@@ -103,10 +103,10 @@ export const promptServices = {
                         JSON.parse(configService.get('DEFAULT_PDFS'))
         let similarDocsFromEmbeddingsService =
         await embeddingsService.findByCriteria({
-          query: context.prompt.neuralCoreference,
+          query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
           pdfIds,
           similarityThreshold: 0,
-          matchCount: 10,
+          matchCount: 3,
         });
         similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
             return {

@@ -37,18 +37,20 @@ model query {
 }
 
 model document {
-  createdAt DateTime               @default(now()) @db.Timestamptz(3)
-  updatedAt DateTime               @updatedAt
-  id        Int                    @id @default(autoincrement())
-  userId    String?                @db.Uuid
-  tags      String?
-  content   String
-  embedding Unsupported("vector")?
-  embeddingType  String?
-  pdf       Unsupported("vector")?
-  pdfId     String?                @db.Uuid
-  pdfName   String?
-  metaData  Json?
+  createdAt           DateTime                         @default(now()) @db.Timestamptz(3)
+  updatedAt           DateTime                         @updatedAt
+  id                  Int                              @id @default(autoincrement())
+  userId              String?                          @db.Uuid
+  tags                String?
+  heading             String?
+  headingEmbedding    Unsupported("vector")?
+  content             String
+  contentEmbedding    Unsupported("vector")?
+  summary             String?
+  summaryEmbedding    Unsupported("vector")?
+  pdfId               String?                          @db.Uuid
+  pdfName             String?
+  metaData            Json?
 }
 
 model workflow {

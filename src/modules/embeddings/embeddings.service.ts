@@ -126,16 +126,16 @@ export class EmbeddingsService {
       document.id as id,
       document.content as content,
       document.tags as tags,
-      1 - (document.pdf <=> '${query_embedding}') as similarity,
+      1 - (document."summaryEmbedding" <=> '${query_embedding}') as similarity,
       document."pdfId" as "pdfId",
       document."metaData" as "metaData"
       FROM
         document
       WHERE 
         document."pdfId"::text = ANY(${pdfIds})
-        AND 1 - (document.pdf <=> '${query_embedding}') > ${similarity_threshold}
+        AND 1 - (document."summaryEmbedding" <=> '${query_embedding}') > ${similarity_threshold}
       ORDER BY
-        document.pdf <=> '${query_embedding}'
+        document."summaryEmbedding" <=> '${query_embedding}'
       LIMIT ${match_count};`
     );
 
