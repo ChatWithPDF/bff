@@ -55,7 +55,8 @@ export const promptServices = {
         userHistoryWhere.queryInEnglish = {
             not: context.prompt.input.body
         }
-        if(context.prompt.input.conversationId) userHistoryWhere.conversationId = context.prompt.input.conversationId;
+        if(!context.prompt.input.conversationId) return [`User: ${context.prompt.inputTextInEnglish}`]
+        userHistoryWhere.conversationId = context.prompt.input.conversationId;
         const userHistory = await prismaService.query.findMany({
             distinct:['queryInEnglish'],
             where: userHistoryWhere,
