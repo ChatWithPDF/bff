@@ -117,6 +117,22 @@ export const promptServices = {
         return similarDocsFromEmbeddingsService
     },
 
+    getEmployeeData: async(context) => {
+        if(context.prompt.input.mobileNumber){
+            try {
+                let employee = await prismaService.employee.findFirst({
+                    where: {
+                        mobileNumber: context.prompt.input.mobileNumber
+                    }
+                })
+                return employee
+            } catch(error) {
+                return null
+            }
+        }
+        return null;
+    },
+
     generateResponse: async (context) => {
         try {
             const userQuestion = "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
@@ -124,10 +140,10 @@ export const promptServices = {
             context.prompt.similarDocs && context.prompt.similarDocs.forEach((doc)=> {
                 expertContext+=`${doc.id}. ${doc.content}\n`
             })
-            let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference)
+            let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference, context.prompt.employeeData)
             let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
             finalResponse = finalResponse.replace("AI: ",'')
-                                         .replace('Based on the context provided ','')
+                                         .replace('B sased on the context provided ','')
                                          .replace("Based on the context provided, ",'')
                                          .replace('According to the context provided ','')
                                          .replace('According to the context provided, ','')

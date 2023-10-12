@@ -23,6 +23,8 @@ export class PromptDto {
   @IsArray()
   @IsUUID('all', { each: true })
   pdfIds?: string[];
+  @IsOptional()
+  mobileNumber?: string;
 }
 
 @Controller()

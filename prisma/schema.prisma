@@ -104,3 +104,23 @@ model speech_to_text {
   text                    String
   spell_corrected_text    String
 }
+
+model employee {
+  employeeId              String   @unique()
+  firstName               String
+  lastName                String?
+  middleName              String?
+  email                   String?
+  track                   String?
+  designation             String?
+  role                    String?
+  program                 String?
+  dateOfJoining           DateTime?
+  dateOfBirth             DateTime?
+  age                     String?
+  gender                  String?
+  maritalStatus           String?
+  mobileNumber            String?
+  presentAddress          String?
+  permanentAddress        String?
+}

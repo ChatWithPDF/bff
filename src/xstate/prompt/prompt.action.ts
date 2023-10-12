@@ -139,6 +139,18 @@ export const promptActions = {
     }]
   })),
 
+  updateContextWithEmployeeData: assign<PromptContext, any>((context, event) => ({
+    ...context,
+    prompt: {
+      ...context.prompt,
+      employeeData: event.data
+    },
+    workflow: [...context.workflow,{
+      state: "getEmployeeData",
+      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
+    }]
+  })),
+
   updateContextWithGeneratedResponse: assign<PromptContext, any>((context, event) => ({
     ...context,
     prompt: {

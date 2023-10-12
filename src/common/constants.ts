@@ -31,20 +31,21 @@ export const chatGPT3Prompt = (
 ];
 
 
-export const generalPrompt = (history, expertContext, userQuestion, neuralCoreference) => {
+export const generalPrompt = (history, expertContext, userQuestion, neuralCoreference, employeeData) => {
   let input = [
       {
           role: "system",
           content:
 `You are a helpful assistant who helps with answering questions for Samagra employees based on the provided information. Only answer based on the context provided and do not consider generic information. You provide context number in square brackets. You may use more than one context to answer. Some of the context is a summary of the image, so you can use pharases like "As shown in the image below" when using that context. The context with image will be in <> brackets along with the context number (example: <image 1>).
 
-NOTE: Please do not mention existance on context in the answer. And also do not add "AI: " suffix to the answer. 
 Use below data while answering the question:
 General Information:
 Today's date: ${moment().format('MMM DD, YYYY dddd')}
-User Information:
-Region: India
-Organization Name: Samagra
+
+${employeeData ? `
+Information of the employee asking the question is given in JSON format below, use this data to give a personalized answer for this employee to the question asked, mention employee name in answer:
+${JSON.stringify(employeeData,null,3)}
+`:''}
 
 ${expertContext}
 

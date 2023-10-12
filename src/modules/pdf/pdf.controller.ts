@@ -10,6 +10,7 @@ import { Request } from 'express';
 import { unlink } from 'fs/promises';
 import { AiToolsService } from "../aiTools/ai-tools.service";
 import { ConfigService } from "@nestjs/config";
+const { parse } = require('date-fns');
 
 const editFileName = (req: Request, file: Express.Multer.File, callback) => {
   const name = file.originalname.split('.')[0];
@@ -126,5 +127,46 @@ export class PDFController {
       })
     }
     return pdfIds;
+  }
+
+  @Post('create-or-update-employee')
+  async addEmployeeData(){
+    let csvnames = ['EmployeeDb']
+    for(let i=0;i<csvnames.length;i++){
+      const csvFilePath = path.join(__dirname, `../../../files/${csvnames[i]}.csv`);
+      console.log('processing CSV',csvFilePath);
+      let data = await this.pdfService.processCSV(csvFilePath)
+      console.log('CSV processed',csvFilePath)
+      console.log('adding data to db',csvFilePath)
+      for(let i=0;i<data.length;i++){
+        let employee = {
+          employeeId: data[i].employeeId,
+          firstName: data[i].firstName,
+          lastName: data[i].lastName,
+          middleName: data[i].middleName,
+          email: data[i].email,
+          track: data[i].track,
+          designation: data[i].designation,
+          role: data[i].role,
+          program: data[i].program,
+          dateOfJoining: parse(data[i].dateOfJoining, 'dd-MM-yyyy', new Date()),
+          dateOfBirth: parse(data[i].dateOfBirth, 'dd-MM-yyyy', new Date()),
+          age: data[i].age,
+          gender: data[i].gender,
+          maritalStatus: data[i].maritalStatus, 
+          mobileNumber: data[i].mobileNumber.replace("91-",""),
+          presentAddress: data[i].presentAddress,
+          permanentAddress: data[i].permanentAddress
+        }
+        await this.prisma.employee.upsert({
+          where: { employeeId: employee.employeeId },
+          update: { ...employee },
+          create: { ...employee },
+        });
+      }
+      console.log('data added to db',csvFilePath)
+      return `data added to db, ${csvFilePath}`
+    }
+    return "Error Occurred, Unable to add employee data";
   }
 }

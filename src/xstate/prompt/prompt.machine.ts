@@ -25,6 +25,7 @@ export interface PromptContext {
     neuralCoreference?: string;
     similarQuestion?: any[];
     errorRate?: number;
+    employeeData?: any;
   };
   currentStateStartTime?: any;
   workflow?: Array<{
@@ -182,8 +183,21 @@ export const promptMachine = createMachine<PromptContext>({
           src: 'getSimilarDocs',
           onDone: [
             {
-              target: 'generateResponse',
+              target: 'getEmployeeData',
               actions: ['updateContextWithSimilarDocs'],
+            }
+          ],
+          onError: 'handleError',
+        },
+      },
+      getEmployeeData: {
+        entry: ['setStartTime'],
+        invoke: {
+          src: 'getEmployeeData',
+          onDone: [
+            {
+              target: 'generateResponse',
+              actions: ['updateContextWithEmployeeData'],
             }
           ],
           onError: 'handleError',
