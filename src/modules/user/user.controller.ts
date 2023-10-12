@@ -77,4 +77,9 @@ export class UserController {
     const userId = request.headers.userId
     return this.userService.deleteConversation(conversationId,userId)
   }
+
+  @Get("profile/:mobileNumber")
+  async getEmployeeDetails(@Param("mobileNumber") mobileNumber: string) {
+    return this.userService.getUserProfile(mobileNumber)
+  }
 }
