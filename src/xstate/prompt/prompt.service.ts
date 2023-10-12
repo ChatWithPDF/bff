@@ -138,7 +138,7 @@ export const promptServices = {
             const userQuestion = "The user has asked a question: " + context.prompt.neuralCoreference + "\n";
             let expertContext = "Some expert context is provided below, do not use this if it not related to user question:\n"
             context.prompt.similarDocs && context.prompt.similarDocs.forEach((doc)=> {
-                expertContext+=`${doc.id}. ${doc.content}\n`
+                expertContext+=`${doc.id}. ${doc.content.replace('\n'," ")}\n`
             })
             let prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference, context.prompt.employeeData)
             let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
