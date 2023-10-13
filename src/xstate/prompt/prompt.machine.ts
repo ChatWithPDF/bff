@@ -183,8 +183,13 @@ export const promptMachine = createMachine<PromptContext>({
           src: 'getSimilarDocs',
           onDone: [
             {
+              cond: 'ifSimilarDocsFound',
               target: 'getEmployeeData',
               actions: ['updateContextWithSimilarDocs'],
+            },
+            {
+              target: 'translateOutput',
+              actions: ["updateContextForResponseWithoutContent"]
             }
           ],
           onError: 'handleError',

@@ -1,6 +1,6 @@
 import { assign } from 'xstate';
 import {PromptContext} from './prompt.machine'
-import { CONTACT_AMAKRUSHI_HELPLINE, REPHRASE_YOUR_QUESTION } from '../../common/constants';
+import { NO_CONTEXT_ANSWER, REPHRASE_YOUR_QUESTION } from '../../common/constants';
 import { Language } from '../../language';
 import { ConfigService } from '@nestjs/config';
 import { CustomLogger } from '../../common/logger';
@@ -37,19 +37,19 @@ export const promptActions = {
     }]
   })),
 
-  updateContextWithContactResponse: assign<PromptContext, any>((context, event) => ({
-    ...context,
-    prompt: {
-      ...context.prompt,
-      inputTextInEnglish: event.data["translated"],
-      outputInEnglish: CONTACT_AMAKRUSHI_HELPLINE('en'),
-      output: CONTACT_AMAKRUSHI_HELPLINE(event.data["translated"])
-    },
-    workflow: [...context.workflow,{
-      state: "translateInput",
-      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
-    }]
-  })),
+  // updateContextWithContactResponse: assign<PromptContext, any>((context, event) => ({
+  //   ...context,
+  //   prompt: {
+  //     ...context.prompt,
+  //     inputTextInEnglish: event.data["translated"],
+  //     outputInEnglish: CONTACT_AMAKRUSHI_HELPLINE('en'),
+  //     output: CONTACT_AMAKRUSHI_HELPLINE(event.data["translated"])
+  //   },
+  //   workflow: [...context.workflow,{
+  //     state: "translateInput",
+  //     timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
+  //   }]
+  // })),
 
   updatePromptWithUserHistory: assign<PromptContext, any>((context, event) => ({
     ...context,
@@ -93,7 +93,7 @@ export const promptActions = {
       ...context.prompt,
       similarQuestion: event.data?.length ? event.data : [],
       outputInEnglish: event.data?.length ? event.data[0].responseInEnglish: '',
-      responseType: "Response given from previous similar question with similarity > 0.97"
+      responseType: "Response given from previous similar question with similarity > 0.85"
     },
     workflow: [...context.workflow,{
       state: "getSimlilarQuestion",
@@ -117,7 +117,8 @@ export const promptActions = {
     ...context,
     prompt: {
       ...context.prompt,
-      responseType: `Response given through GPT without content`
+      responseType: `Response given through GPT without content`,
+      outputInEnglish: NO_CONTEXT_ANSWER
     },
     workflow: [...context.workflow,{
       state: "getResponse(without hitting the content DB)",

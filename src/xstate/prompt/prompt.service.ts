@@ -105,7 +105,7 @@ export const promptServices = {
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
           pdfIds,
-          similarityThreshold: 0,
+          similarityThreshold: 0.85,
           matchCount: 3,
         });
         similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{

@@ -4,8 +4,7 @@ export const REPHRASE_YOUR_QUESTION = (inputLanguage) =>
 inputLanguage && inputLanguage == 'en' ? "Please try rephrasing your question or try again later." :
 "ଦୟାକରି ଆପଣଙ୍କର ପ୍ରଶ୍ନର ପୁନରାବୃତ୍ତି କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |";
 
-export const CONTACT_AMAKRUSHI_HELPLINE = (inputLanguage) => 
-inputLanguage && inputLanguage == 'en' ? "You can contact the Ama Krushi helpline by dialing 155333. They will provide you with information and reply to your queries within 24 hours." : "ଆପଣ 155333 ଡାଏଲ୍ କରି ଆମା କ୍ରୁସି ହେଲ୍ପଲାଇନ ସହିତ ଯୋଗାଯୋଗ କରିପାରିବେ | ସେମାନେ ଆପଣଙ୍କୁ ସୂଚନା ପ୍ରଦାନ କରିବେ ଏବଂ 24 ଘଣ୍ଟା ମଧ୍ୟରେ ଆପଣଙ୍କ ପ୍ରଶ୍ନର ଉତ୍ତର ଦେବେ |"
+export const NO_CONTEXT_ANSWER = "Apologies, but I currently lack access to this information. Your query has been forwarded to the central team, who will work on adding this data to my content repository. In the meantime, is there anything else I can assist you with?"
 
 export const chatGPT3Prompt = (
   history,
