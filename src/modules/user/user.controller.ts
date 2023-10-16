@@ -1,12 +1,14 @@
-import { Controller, Get, Param, Query, Request } from '@nestjs/common';
+import { Controller, Get, Param, Query, Request, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { query } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
 import { CustomLogger } from '../../common/logger';
+import { AuthGuard } from 'src/common/auth-gaurd';
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
 @Controller('user')
+@UseGuards(AuthGuard)
 export class UserController {
   private logger: CustomLogger;
   constructor(
@@ -20,55 +22,43 @@ export class UserController {
   async conversations(
     @Request() request, 
     @Query('userid') adminUserId: string, 
-    @Query('page') page: number, 
-    @Query('perPage') perPage: number,
-    @Query('mobileNumber') mobileNumber: string,
-    @Query('fromDate') fromDate: string,
-    @Query('toDate') toDate: string
+    @Query('mobileNumber') mobileNumber: string
   ): Promise<query[]> {
     let userId = null
-    userId = adminUserId
-    // if(request.headers.roles.indexOf('Admin') != -1) {
-    //   userId = adminUserId
-    //   if(!userId && mobileNumber) {
-    //     var myHeaders = new Headers();
-    //     myHeaders.append("x-application-id", this.configService.get("FRONTEND_APPLICATION_ID"));
-    //     myHeaders.append("Authorization", this.configService.get('FUSION_AUTH_API_KEY'));
+    if(request.headers.roles.indexOf('Admin') != -1) {
+      userId = adminUserId
+      if(!userId && mobileNumber) {
+        var myHeaders = new Headers();
+        myHeaders.append("x-application-id", this.configService.get("FRONTEND_APPLICATION_ID"));
+        myHeaders.append("Authorization", this.configService.get('FUSION_AUTH_API_KEY'));
 
-    //     var requestOptions: RequestInit = {
-    //       method: 'GET',
-    //       headers: myHeaders,
-    //       redirect: 'follow'
-    //     };
-    //     try{
-    //       let res: any = await fetch(`${this.configService.get('FUSION_AUTH_BASE_URL')}api/user?username=${mobileNumber}`, requestOptions)
-    //       res = await res.json()
-    //       userId = res.user.id
-    //     } catch(error) {
-    //       this.logger.error(error)
-    //     }
-    //   }
-    // } else {
-    //   userId = request.headers.userId
-    // }
-    page = page?page:1
-    perPage = perPage?perPage:10
+        var requestOptions: any = {
+          method: 'GET',
+          headers: myHeaders,
+          redirect: 'follow'
+        };
+        try{
+          let res: any = await fetch(`${this.configService.get('FUSION_AUTH_BASE_URL')}api/user?username=${mobileNumber}`, requestOptions)
+          res = await res.json()
+          userId = res.user.id
+        } catch(error) {
+          this.logger.error(error)
+        }
+      }
+    } else {
+      userId = request.headers.userId
+    }
     return this.userService.conversationsList(
-      userId,
-      parseInt(`${page}`),
-      parseInt(`${perPage}`),
-      fromDate,
-      toDate
+      userId
     );
   }
 
   @Get("/chathistory/:conversationId")
   async chatHistory(@Param("conversationId") conversationId: string, @Request() request, @Query('userid') adminUserId: string): Promise<query[]> {
-    let userId = adminUserId
-    // let userId = request.headers.userId
-    // if(request.headers.roles.indexOf('Admin') != -1) {
-    //   userId = adminUserId
-    // }
+    let userId = request.headers.userId
+    if(request.headers.roles.indexOf('Admin') != -1) {
+      userId = adminUserId
+    }
     return this.userService.conversationHistory(conversationId,userId);
   }
 
