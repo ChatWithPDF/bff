@@ -64,6 +64,7 @@ export class PDFController {
         let document = await this.prisma.document.create({
             data:{
                 content: data[i].content,
+                summary: data[i].content,
                 pdfId,
                 pdfName: csvFilePath,
                 metaData: {
@@ -73,10 +74,15 @@ export class PDFController {
             }
         })
         await this.prisma.$queryRawUnsafe(
-            `UPDATE document SET pdf = '[${JSON.parse(data[i].embeddings)
+          `UPDATE document 
+            SET "contentEmbedding" = '[${JSON.parse(data[i].embeddings)
+            .map((x) => `${x}`)
+            .join(",")}]', 
+            "summaryEmbedding" = '[${JSON.parse(data[i].embeddings)
               .map((x) => `${x}`)
-              .join(",")}]' WHERE id = ${document.id}`
-          );
+              .join(",")}]'
+            WHERE id = ${document.id}`
+        );
     }
     return pdfId;
   }
