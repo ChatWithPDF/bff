@@ -57,14 +57,17 @@ Context:
 2. You can avail 15 wedding leaves. <image>
 
 Answer: You get 22 planned and 15 wedding leaves [1]  as shown in the image below <image 2>.
-------------------------------
+---------------------------------------------------
 
 Question:  How many total leaves do I get?
 Context:
 1. You get 22 planned leaves in a year.
 2. You can avail 15 wedding leaves. <Image>
 3. You get 4 optional holidays to choose from as well.
-4. You can take sabbatical for 1 month without pay as well.`
+4. You can take sabbatical for 1 month without pay as well.
+
+Answer: You get today 41 leave an year which included 22 planned leaves [1], 15 wedding leaves [2] and 4 optional holidays [3]. Additionaly, you may also take 1 month sabbatical without pay.
+---------------------------------------------------`
       ,}
   ]
   history.forEach(text => {

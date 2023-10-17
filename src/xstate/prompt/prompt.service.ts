@@ -6,6 +6,7 @@ import { AiToolsService } from "../../modules/aiTools/ai-tools.service";
 import { Language } from "../../language";
 import { CustomLogger } from "../../common/logger";
 import { chatGPT3Prompt, generalPrompt } from "../../common/constants";
+import { flagsmith } from "../../common/flagsmith";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
@@ -96,6 +97,11 @@ export const promptServices = {
     },
 
     getSimilarDocs: async(context) => {
+        const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
+        var similarityThreshold = flags.getFeatureValue('similarity_threshold');
+        if(similarityThreshold) similarityThreshold = parseFloat(similarityThreshold)
+        else similarityThreshold = 0.85
+        console.log("similarityThreshold",similarityThreshold)
         let pdfIds = context.prompt.input.pdfId ? 
                         [context.prompt.input.pdfId] : 
                         context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
@@ -105,7 +111,7 @@ export const promptServices = {
         await embeddingsService.findByCriteria({
           query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
           pdfIds,
-          similarityThreshold: 0.85,
+          similarityThreshold,
           matchCount: 3,
         });
         similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
