@@ -37,19 +37,22 @@ export class UserService {
             queryId: data.id
           }
         })
-        for(let doc of data["context"]){
-          doc["metaData"] = (await this.prisma.document.findUnique({
-            where: {
-              id: doc.id
-            },
-            select: {
-              metaData: true
-            }
-          }))['metaData']
+        if(data["context"]){
+          for(let doc of data["context"]){
+            doc["metaData"] = (await this.prisma.document.findUnique({
+              where: {
+                id: doc.id
+              },
+              select: {
+                metaData: true
+              }
+            }))['metaData']
+          }
         }
       }
       return userHistory;
     } catch (error) {
+      console.log(error)
       throw new BadRequestException([
         "Something went wrong while fetching conversation history",
       ]);
