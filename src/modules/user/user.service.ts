@@ -23,7 +23,7 @@ export class UserService {
     userId: string
   ): Promise<query[]> {
     try {
-      const userHistory = await this.prisma.query.findMany({
+      let userHistory:any = await this.prisma.query.findMany({
         where: {
           conversationId: conversationId,
           userId,
@@ -31,6 +31,13 @@ export class UserService {
         },
         orderBy: [{ createdAt: "asc" }]
       });
+      for(let data of userHistory) {
+        data["context"] = await this.prisma.similarity_search_response.findMany({
+          where:{
+            queryId: data.id
+          }
+        })
+      }
       return userHistory;
     } catch (error) {
       throw new BadRequestException([
