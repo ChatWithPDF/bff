@@ -46,7 +46,7 @@ export class UserService {
               select: {
                 metaData: true
               }
-            }))['metaData']
+            }))?.metaData
           }
         }
       }
