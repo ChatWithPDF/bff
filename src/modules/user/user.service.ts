@@ -41,7 +41,7 @@ export class UserService {
           for(let doc of data["context"]){
             doc["metaData"] = (await this.prisma.document.findUnique({
               where: {
-                id: doc.id
+                id: doc.documentId
               },
               select: {
                 metaData: true
