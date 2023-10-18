@@ -184,12 +184,30 @@ export const promptMachine = createMachine<PromptContext>({
           onDone: [
             {
               cond: 'ifSimilarDocsFound',
-              target: 'getEmployeeData',
+              target: 'getHighestMatchingChunk',
               actions: ['updateContextWithSimilarDocs'],
             },
             {
               target: 'translateOutput',
               actions: ["updateContextForResponseWithoutContent"]
+            }
+          ],
+          onError: 'handleError',
+        },
+      },
+      getHighestMatchingChunk:{
+        entry: ['setStartTime'],
+        invoke: {
+          src: 'getHighestMatchingChunk',
+          onDone: [
+            {
+              cond: 'ifHighestMatchingChunkFound',
+              target: 'translateOutput',
+              actions: ['updateContextWithHighestMatchingChunk']
+            },
+            {
+              target: 'getEmployeeData',
+              actions: []
             }
           ],
           onError: 'handleError',

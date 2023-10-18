@@ -55,6 +55,12 @@ export class AppController {
     let result = promptProcessingService.getSnapshot().context.prompt
     // Stop the state machine
     promptProcessingService.stop();
+    result.similarDocs = result?.similarDocs?.length && result?.similarDocs.map((doc)=>{
+        return {
+            ...doc,
+            content: doc.content.replace(/\s{2,}/g, ' ').replaceAll('\n',' ')
+        }
+    })
     return {
       id: result.input.messageId,
       neuralCoreferencedQuestion: result.neuralCoreference,

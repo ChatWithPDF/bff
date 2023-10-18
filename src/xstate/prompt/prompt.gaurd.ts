@@ -4,6 +4,7 @@ export const promptGuards = {
     isUserHistoryEmpty: (_, event) => event.data.length === 0,
     ifSimilarQuestionFound: (_, event) => event.data?.length > 0,
     ifSimilarDocsFound: (_, event) => event.data?.length > 0,
+    ifHighestMatchingChunkFound: (_, event) => event.data ? true: false,
     llmResponseIsEmpty: (_, event) => {
         if(!event.data['response']){
             return true

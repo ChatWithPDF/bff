@@ -101,7 +101,7 @@ export const promptServices = {
         var similarityThreshold = flags.getFeatureValue('similarity_threshold');
         if(similarityThreshold) similarityThreshold = parseFloat(similarityThreshold)
         else similarityThreshold = 0.85
-        console.log("similarityThreshold",similarityThreshold)
+        // console.log("similarityThreshold",similarityThreshold)
         let pdfIds = context.prompt.input.pdfId ? 
                         [context.prompt.input.pdfId] : 
                         context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
@@ -114,13 +114,42 @@ export const promptServices = {
           similarityThreshold,
           matchCount: 3,
         });
-        similarDocsFromEmbeddingsService = similarDocsFromEmbeddingsService.map((doc)=>{
-            return {
-                ...doc,
-                content:doc.content.replace(/\s{2,}/g, ' ')
-            }
-        })
         return similarDocsFromEmbeddingsService
+    },
+
+    getHighestMatchingChunk: async(context) => {
+        const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
+        var highestSimilarityThreshold = flags.getFeatureValue('highest_similarity_threshold_for_direct_answer');
+        if(highestSimilarityThreshold) highestSimilarityThreshold = parseFloat(highestSimilarityThreshold)
+        else highestSimilarityThreshold = 0.91
+        // console.log("highestSimilarityThreshold",highestSimilarityThreshold)
+        let pdfIds = context.prompt.input.pdfId ? 
+                        [context.prompt.input.pdfId] : 
+                        context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
+                        context.prompt.input.pdfIds :
+                        JSON.parse(configService.get('DEFAULT_PDFS'))
+        let highestSummarySimilarityChunk;
+        if(context.prompt.similarDocs.length){
+            if(context.prompt.similarDocs[0].similarity > highestSimilarityThreshold){
+                highestSummarySimilarityChunk = context.prompt.similarDocs
+            }
+        }
+        // console.log("highestSummarySimilarityChunk",highestSummarySimilarityChunk)
+        const highestHeaderSimilarityChunk = await embeddingsService.findByCriteriaViaHeading({
+            query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
+            pdfIds,
+            similarityThreshold: highestSimilarityThreshold,
+            matchCount: 1,
+          });
+        //   console.log("highestHeaderSimilarityChunk",highestHeaderSimilarityChunk)
+        if(highestSummarySimilarityChunk?.length && highestHeaderSimilarityChunk?.length){
+            if(highestSummarySimilarityChunk[0].similarity>highestHeaderSimilarityChunk[0].similarity)
+            return highestSummarySimilarityChunk[0]
+            else return highestHeaderSimilarityChunk[0]
+        } else {
+            if(highestSummarySimilarityChunk?.length) return highestSummarySimilarityChunk[0]
+            if(highestHeaderSimilarityChunk?.length) return highestHeaderSimilarityChunk[0]
+        }
     },
 
     getEmployeeData: async(context) => {
@@ -193,6 +222,7 @@ export const promptServices = {
         if(context.prompt.similarDocs && context.prompt.similarDocs.length > 0){
             let data = JSON.parse(JSON.stringify(context.prompt.similarDocs))
             let similarDocsCreateData = data.map(e=>{
+              e['content'] = e.content.replace(/\s{2,}/g, ' ')
               e['queryId'] = context.prompt.input.messageId
               e['documentId'] = e.id
               delete e.pdfId

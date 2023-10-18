@@ -87,6 +87,21 @@ export const promptActions = {
     }]
   })),
 
+  updateContextWithHighestMatchingChunk: assign<PromptContext, any>((context, event) => ({
+    ...context,
+    prompt: {
+      ...context.prompt,
+      similarDocs: [event.data],
+      oldSimilarDocs: context.prompt.similarDocs,
+      outputInEnglish: event.data ? event.data.content: '',
+      responseType: "Response given from highest matching chunk"
+    },
+    workflow: [...context.workflow,{
+      state: "getHighestMatchingChunk",
+      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
+    }]
+  })),
+
   updateContextWithSimilarQuestion: assign<PromptContext, any>((context, event) => ({
     ...context,
     prompt: {
