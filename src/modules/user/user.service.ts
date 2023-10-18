@@ -37,6 +37,16 @@ export class UserService {
             queryId: data.id
           }
         })
+        for(let doc of data["context"]){
+          doc["metaData"] = (await this.prisma.document.findUnique({
+            where: {
+              id: doc.id
+            },
+            select: {
+              metaData: true
+            }
+          }))['metaData']
+        }
       }
       return userHistory;
     } catch (error) {
