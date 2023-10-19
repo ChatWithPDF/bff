@@ -4,7 +4,7 @@ export const REPHRASE_YOUR_QUESTION = (inputLanguage) =>
 inputLanguage && inputLanguage == 'en' ? "Please try rephrasing your question or try again later." :
 "ଦୟାକରି ଆପଣଙ୍କର ପ୍ରଶ୍ନର ପୁନରାବୃତ୍ତି କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |";
 
-export const NO_CONTEXT_ANSWER = "Apologies, but I currently lack access to this information. Your query has been forwarded to the central team, who will work on adding this data to my content repository. In the meantime, is there anything else I can assist you with?"
+export const NO_CONTEXT_ANSWER = "Apologies, but I currently lack access to this information. Your query has been forwarded to the OD team, who will work on adding this data to my content repository. In the meantime, is there anything else I can assist you with?"
 
 export const chatGPT3Prompt = (
   history,
