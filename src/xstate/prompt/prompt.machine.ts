@@ -58,7 +58,7 @@ export const promptMachine = createMachine<PromptContext>({
           src: 'detectLanguage',
           onDone: [
             {
-              target: 'translateInput',
+              target: 'getUserHistory',
               cond: 'unableToDetectLanguage',
               actions: [
                 assign({
@@ -71,38 +71,38 @@ export const promptMachine = createMachine<PromptContext>({
               ]
             },
             {
-              target: 'translateInput',
+              target: 'getUserHistory',
               actions: ['updatePromptHistoryWithDetectedLanguage']
             }
           ],
           onError: 'handleError',
         }
       },
-      translateInput: {
-        entry: ['setStartTime'],
-        invoke: {
-          src: 'translateInput',
-          onDone: [
-            {
-              cond: 'unableToTranslate',
-              target: 'handleError',
-              actions: [
-                assign({
-                  prompt:(context,_)=>context.prompt,
-                  workflow:(context,_)=>context.workflow,
-                  stateErrorRateData: (context,_)=>context.stateErrorRateData,
-                  currentState: 'unableToTranslateInput'
-                }),
-              ]
-            },
-            {
-              target: 'getUserHistory',
-              actions: ['updateContextWithTranslatedInput']
-            }
-          ],
-          onError: 'handleError',
-        },
-      },
+      // translateInput: {
+      //   entry: ['setStartTime'],
+      //   invoke: {
+      //     src: 'translateInput',
+      //     onDone: [
+      //       {
+      //         cond: 'unableToTranslate',
+      //         target: 'handleError',
+      //         actions: [
+      //           assign({
+      //             prompt:(context,_)=>context.prompt,
+      //             workflow:(context,_)=>context.workflow,
+      //             stateErrorRateData: (context,_)=>context.stateErrorRateData,
+      //             currentState: 'unableToTranslateInput'
+      //           }),
+      //         ]
+      //       },
+      //       {
+      //         target: 'getUserHistory',
+      //         actions: ['updateContextWithTranslatedInput']
+      //       }
+      //     ],
+      //     onError: 'handleError',
+      //   },
+      // },
       getUserHistory: {
         entry: ['setStartTime'],
         invoke: {
@@ -159,24 +159,24 @@ export const promptMachine = createMachine<PromptContext>({
           onError: 'handleError',
         },
       },
-      findSimilarQuestion: {
-        entry: ['setStartTime'],
-        invoke: {
-          src: 'findSimilarQuestion',
-          onDone: [
-            {
-              cond: 'ifSimilarQuestionFound',
-              target: 'translateOutput',
-              actions: ['updateContextWithSimilarQuestion']
-            },
-            {
-              target: 'getSimilarDocs',
-              actions: []
-            }
-          ],
-          onError: 'handleError',
-        },
-      },
+      // findSimilarQuestion: {
+      //   entry: ['setStartTime'],
+      //   invoke: {
+      //     src: 'findSimilarQuestion',
+      //     onDone: [
+      //       {
+      //         cond: 'ifSimilarQuestionFound',
+      //         target: 'translateOutput',
+      //         actions: ['updateContextWithSimilarQuestion']
+      //       },
+      //       {
+      //         target: 'getSimilarDocs',
+      //         actions: []
+      //       }
+      //     ],
+      //     onError: 'handleError',
+      //   },
+      // },
       getSimilarDocs: {
         entry: ['setStartTime'],
         invoke: {
@@ -184,30 +184,26 @@ export const promptMachine = createMachine<PromptContext>({
           onDone: [
             {
               cond: 'ifSimilarDocsFound',
-              target: 'getHighestMatchingChunk',
+              target: 'getBestMatchingChunks',
               actions: ['updateContextWithSimilarDocs'],
-            },
-            {
-              target: 'translateOutput',
-              actions: ["updateContextForResponseWithoutContent"]
             }
           ],
           onError: 'handleError',
         },
       },
-      getHighestMatchingChunk:{
+      getBestMatchingChunks:{
         entry: ['setStartTime'],
         invoke: {
-          src: 'getHighestMatchingChunk',
+          src: 'getBestMatchingChunks',
           onDone: [
             {
-              cond: 'ifHighestMatchingChunkFound',
-              target: 'translateOutput',
-              actions: ['updateContextWithHighestMatchingChunk']
+              cond: 'ifBestMatchingChunksFound',
+              target: 'getEmployeeData',
+              actions: ['updateContextWithBestMatchingChunks']
             },
             {
-              target: 'getEmployeeData',
-              actions: []
+              target: 'translateOutput',
+              actions: ["updateContextForResponseWithoutContent"]
             }
           ],
           onError: 'handleError',

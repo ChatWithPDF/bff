@@ -16,6 +16,7 @@ export const promptActions = {
       prompt: {
         ...context.prompt,
         inputLanguage: event.data["language"],
+        inputTextInEnglish: context.prompt.input.body
       },
       workflow: [{
         state: "detectLanguage",
@@ -51,7 +52,8 @@ export const promptActions = {
   //   }]
   // })),
 
-  updatePromptWithUserHistory: assign<PromptContext, any>((context, event) => ({
+  updatePromptWithUserHistory: assign<PromptContext, any>((context, event) => {
+    return {
     ...context,
     prompt: {
       ...context.prompt,
@@ -61,9 +63,10 @@ export const promptActions = {
       state: "getUserHistory",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
-  })),
+  }}),
 
-  setNeuralCoreferenceAsInput: assign<PromptContext, any>((context, event) => ({
+  setNeuralCoreferenceAsInput: assign<PromptContext, any>((context, event) => {
+    return {
     ...context,
     prompt: {
       ...context.prompt,
@@ -73,9 +76,10 @@ export const promptActions = {
       state: "getNeuralCoreference",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
-  })),
+  }}),
 
-  updateContextWithCoreferencedPrompt: assign<PromptContext, any>((context, event) => ({
+  updateContextWithCoreferencedPrompt: assign<PromptContext, any>((context, event) => {
+    return {
     ...context,
     prompt: {
       ...context.prompt,
@@ -85,22 +89,23 @@ export const promptActions = {
       state: "getNeuralCoreference",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
-  })),
+  }}),
 
-  updateContextWithHighestMatchingChunk: assign<PromptContext, any>((context, event) => ({
+  updateContextWithBestMatchingChunks: assign<PromptContext, any>((context, event) => {
+    return {
     ...context,
     prompt: {
       ...context.prompt,
-      similarDocs: [event.data],
+      similarDocs: event.data,
       oldSimilarDocs: context.prompt.similarDocs,
       outputInEnglish: event.data ? event.data.content: '',
       responseType: "Response given from highest matching chunk"
     },
     workflow: [...context.workflow,{
-      state: "getHighestMatchingChunk",
+      state: "getBestMatchingChunks",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
-  })),
+  }}),
 
   updateContextWithSimilarQuestion: assign<PromptContext, any>((context, event) => ({
     ...context,
@@ -116,17 +121,18 @@ export const promptActions = {
     }]
   })),
 
-  updateContextWithSimilarDocs: assign<PromptContext, any>((context, event) => ({
+  updateContextWithSimilarDocs: assign<PromptContext, any>((context, event) => {
+    return {
     ...context,
     prompt: {
       ...context.prompt,
-      similarDocs: event.data?.length ? event.data : [],
+      similarDocs: event.data,
     },
     workflow: [...context.workflow,{
       state: "getSimilarDocs",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
-  })),
+  }}),
 
   updateContextForResponseWithoutContent: assign<PromptContext, any>((context, event) => ({
     ...context,

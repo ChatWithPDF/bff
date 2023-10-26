@@ -99,7 +99,7 @@ export class EmbeddingsService {
     return response;
   }
 
-  async findByCriteria(searchQueryDto: SearchQueryDto): Promise<any> {
+  async findByCriteria(searchQueryDto: SearchQueryDto, searchVia: string = 'summaryEmbedding'): Promise<any> {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
@@ -124,18 +124,18 @@ export class EmbeddingsService {
     .$queryRawUnsafe(`
       SELECT
       document.id as id,
-      document.content as content,
+      CONCAT('Heading: ', document.heading, E'\n', 'Content: ', document.content) AS content,
       document.tags as tags,
-      1 - (document."summaryEmbedding" <=> '${query_embedding}') as similarity,
+      1 - (document."${searchVia}" <=> '${query_embedding}') as similarity,
       document."pdfId" as "pdfId",
       document."metaData" as "metaData"
       FROM
         document
       WHERE 
         document."pdfId"::text = ANY(${pdfIds})
-        AND 1 - (document."summaryEmbedding" <=> '${query_embedding}') > ${similarity_threshold}
+        AND 1 - (document."${searchVia}" <=> '${query_embedding}') > ${similarity_threshold}
       ORDER BY
-        document."summaryEmbedding" <=> '${query_embedding}'
+        document."${searchVia}" <=> '${query_embedding}'
       LIMIT ${match_count};`
     );
 
