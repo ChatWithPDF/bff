@@ -110,7 +110,8 @@ export class PDFController {
                   startPage: data[i].start_page,
                   endPage: data[i].end_page
                 },
-                chunkId: data[i]?.chunkId ? parseInt(data[i].chunkId): null
+                chunkId: data[i]?.chunkId ? parseInt(data[i].chunkId): null,
+                type: data[i].type
             }
         })
         await this.prisma.$queryRawUnsafe(

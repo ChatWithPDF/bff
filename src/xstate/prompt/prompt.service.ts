@@ -104,9 +104,13 @@ export const promptServices = {
     getSimilarDocs: async(context) => {
         const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
 
-        // let similarityThresholdForSummary = flags.getFeatureValue('similarity_threshold_for_summary');
-        // if(similarityThresholdForSummary) similarityThresholdForSummary = parseFloat(similarityThresholdForSummary)
-        // else similarityThresholdForSummary = 0.85
+        let policyUsers = flags.getFeatureValue('policy_users');
+        if(policyUsers) policyUsers = JSON.parse(policyUsers)
+        else policyUsers = []
+        
+        let isPolicyUser = false;
+
+        if(context.prompt.input.mobileNumber && policyUsers.indexOf(context.prompt.input.mobileNumber) != -1) isPolicyUser = true 
 
         // let similarityThresholdForHeading = flags.getFeatureValue('similarity_threshold_for_heading');
         // if(similarityThresholdForHeading) similarityThresholdForHeading = parseFloat(similarityThresholdForHeading)
@@ -123,25 +127,34 @@ export const promptServices = {
                         JSON.parse(configService.get('DEFAULT_PDFS'))
                         
         let contentDocs = await embeddingsService.findByCriteria({
-            query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-            pdfIds,
-            similarityThreshold: 0,
-            matchCount: 6,
-        },"contentEmbedding");
+                query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
+                pdfIds,
+                similarityThreshold: 0,
+                matchCount: 6,
+            },
+            "contentEmbedding",
+            isPolicyUser? 'policy' : null
+        );
 
         let headingDocs = await embeddingsService.findByCriteria({
-            query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-            pdfIds,
-            similarityThreshold: 0,
-            matchCount: 6,
-          },"headingEmbedding");
+                query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
+                pdfIds,
+                similarityThreshold: 0,
+                matchCount: 6,
+            },
+            "headingEmbedding",
+            isPolicyUser? 'policy' : null
+        );
 
         let summaryDocs = await embeddingsService.findByCriteria({
-            query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-            pdfIds,
-            similarityThreshold: 0,
-            matchCount: 6,
-          },"summaryEmbedding");
+                query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
+                pdfIds,
+                similarityThreshold: 0,
+                matchCount: 6,
+            },
+            "summaryEmbedding",
+            isPolicyUser? 'policy' : null
+        );
 
         return { 
             contentDocs, 

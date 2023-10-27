@@ -99,7 +99,7 @@ export class EmbeddingsService {
     return response;
   }
 
-  async findByCriteria(searchQueryDto: SearchQueryDto, searchVia: string = 'summaryEmbedding'): Promise<any> {
+  async findByCriteria(searchQueryDto: SearchQueryDto, searchVia: string = 'summaryEmbedding', type = ""): Promise<any> {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
@@ -129,12 +129,14 @@ export class EmbeddingsService {
       1 - (document."${searchVia}" <=> '${query_embedding}') as similarity,
       document."pdfId" as "pdfId",
       document."metaData" as "metaData",
-      document."chunkId" as "chunkId"
+      document."chunkId" as "chunkId",
+      document.type as type
       FROM
         document
       WHERE 
         document."pdfId"::text = ANY(${pdfIds})
         AND 1 - (document."${searchVia}" <=> '${query_embedding}') > ${similarity_threshold}
+        ${type? `AND document.type = '${type}'`:''}
       ORDER BY
         document."${searchVia}" <=> '${query_embedding}'
       LIMIT ${match_count};`
