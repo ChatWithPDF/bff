@@ -51,6 +51,7 @@ model document {
   pdfId               String?                          @db.Uuid
   pdfName             String?
   metaData            Json?
+  chunkId             Int?
 }
 
 model workflow {

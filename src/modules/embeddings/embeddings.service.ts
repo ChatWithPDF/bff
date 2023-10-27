@@ -128,7 +128,8 @@ export class EmbeddingsService {
       document.tags as tags,
       1 - (document."${searchVia}" <=> '${query_embedding}') as similarity,
       document."pdfId" as "pdfId",
-      document."metaData" as "metaData"
+      document."metaData" as "metaData",
+      document."chunkId" as "chunkId"
       FROM
         document
       WHERE 

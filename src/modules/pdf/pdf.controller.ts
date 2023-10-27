@@ -89,7 +89,7 @@ export class PDFController {
 
   @Post('addpdfdata')
   async addData(){
-    let csvnames = ['samagraEmbeddings']
+    let csvnames = ['policy_data']
     let pdfIds= [];
     for(let i=0;i<csvnames.length;i++){
       let pdfId = uuidv4()
@@ -109,7 +109,8 @@ export class PDFController {
                 metaData: {
                   startPage: data[i].start_page,
                   endPage: data[i].end_page
-                }
+                },
+                chunkId: data[i]?.chunkId ? parseInt(data[i].chunkId): null
             }
         })
         await this.prisma.$queryRawUnsafe(
