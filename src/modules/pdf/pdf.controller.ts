@@ -89,7 +89,7 @@ export class PDFController {
 
   @Post('addpdfdata')
   async addData(){
-    let csvnames = ['policy_data']
+    let csvnames = ['document_data']
     let pdfIds= [];
     for(let i=0;i<csvnames.length;i++){
       let pdfId = uuidv4()
