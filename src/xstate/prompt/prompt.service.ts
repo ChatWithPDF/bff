@@ -104,13 +104,13 @@ export const promptServices = {
     getSimilarDocs: async(context) => {
         const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
 
-        let policyUsers = flags.getFeatureValue('policy_users');
-        if(policyUsers) policyUsers = JSON.parse(policyUsers)
-        else policyUsers = []
+        let allDocumentUsers = flags.getFeatureValue('all_document_users');
+        if(allDocumentUsers) allDocumentUsers = JSON.parse(allDocumentUsers)
+        else allDocumentUsers = []
         
-        let isPolicyUser = false;
+        let isAllDocumentUser = false;
 
-        if(context.prompt.input.mobileNumber && policyUsers.indexOf(context.prompt.input.mobileNumber) != -1) isPolicyUser = true 
+        if(context.prompt.input.mobileNumber && allDocumentUsers.indexOf(context.prompt.input.mobileNumber) != -1) isAllDocumentUser = true 
 
         // let similarityThresholdForHeading = flags.getFeatureValue('similarity_threshold_for_heading');
         // if(similarityThresholdForHeading) similarityThresholdForHeading = parseFloat(similarityThresholdForHeading)
@@ -133,7 +133,7 @@ export const promptServices = {
                 matchCount: 6,
             },
             "contentEmbedding",
-            isPolicyUser? 'policy' : null
+            isAllDocumentUser? null : 'policy'
         );
 
         let headingDocs = await embeddingsService.findByCriteria({
@@ -143,7 +143,7 @@ export const promptServices = {
                 matchCount: 6,
             },
             "headingEmbedding",
-            isPolicyUser? 'policy' : null
+            isAllDocumentUser? null : 'policy'
         );
 
         let summaryDocs = await embeddingsService.findByCriteria({
@@ -153,7 +153,7 @@ export const promptServices = {
                 matchCount: 6,
             },
             "summaryEmbedding",
-            isPolicyUser? 'policy' : null
+            isAllDocumentUser? null : 'policy'
         );
 
         return { 
