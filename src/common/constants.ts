@@ -62,25 +62,11 @@ Omit reproducing information that doesn't concern me.
 
 General Information:
 Today's date: ${moment().format('MMM DD, YYYY (dddd)')}
-More information about myself: {
-   "employeeId": "EMP-077",
-   "firstName": "Prateek",
-   "lastName": "Jakhar",
-   "middleName": "",
-   "email": "prateek@samagragovernance.in",
-   "track": "Engineering Track",
-   "designation": "Software Engineer I",
-   "role": "Software Engineer",
-   "program": "Engineering",
-   "dateOfJoining": "2022-11-13T18:30:00.000Z",
-   "dateOfBirth": "2001-11-09T18:30:00.000Z",
-   "age": "21 year(s) 11 month(s)",
-   "gender": "Male",
-   "maritalStatus": "Single",
-   "mobileNumber": "9034350533",
-   "presentAddress": "",
-   "permanentAddress": ""
-}
+
+${employeeData ? `
+More information about myself::
+${JSON.stringify(employeeData,null,3)}
+`:''}
 
 Tailor your answer with me in mind using the above information.
 
