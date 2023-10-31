@@ -55,6 +55,7 @@ export class AppController {
     let result = promptProcessingService.getSnapshot().context.prompt
     // Stop the state machine
     promptProcessingService.stop();
+    if(result?.similarDocs?.topMatchedChunks)
     result.similarDocs.topMatchedChunks = result?.similarDocs?.topMatchedChunks?.length && result?.similarDocs?.topMatchedChunks?.map((doc)=>{
         return {
             ...doc,

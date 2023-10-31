@@ -25,70 +25,131 @@ export class PromptHistoryService {
     this.logger = new CustomLogger("PromptHistoryService");
     this.aiToolsService = new AiToolsService(configService, prisma)
   }
-  async createOrUpdate(data: CreatePromptDto): Promise<PromptHistory> {
-    let olderDocument;
-    let document: PromptHistory;
-    try {
-      if (!isNaN(parseInt(data.id)))
-        olderDocument = await this.prisma.prompt_history.findUnique({
-          where: {
-            id: parseInt(data.id),
-          },
-        });
-      else if (data.queryInEnglish && data.queryInEnglish!='')
-      olderDocument = await this.prisma.prompt_history.findUnique({
-        where: {
-          queryInEnglish: data.queryInEnglish
-        },
-      });
-      if (olderDocument) {
-        document = await this.prisma.prompt_history.update({
-          where: { id: parseInt(olderDocument.id) },
-          data: { timesUsed: olderDocument.timesUsed + 1 },
-        });
-      } else {
-        let embedding = (await this.aiToolsService.getEmbedding(data.queryInEnglish))[0];
-        try {
-          document = await this.prisma.prompt_history.create({
-            data: {
-              queryInEnglish: data.queryInEnglish,
-              responseInEnglish: data.responseInEnglish,
-              timesUsed: 0,
-              responseTime: data.responseTime,
-              metadata: data.metadata,
-              queryId: data.queryId,
-              pdfId: data.pdfId
-            },
-          });
-          await this.prisma.$queryRawUnsafe(
-            `UPDATE prompt_history SET pdf = '[${embedding
-              .map((x) => `${x}`)
-              .join(",")}]' WHERE id = ${document.id}`
-          );
-        } catch(error) {
-          this.logger.error(error)
+  // async createOrUpdate(data: CreatePromptDto): Promise<PromptHistory> {
+  //   let olderDocument;
+  //   let document: PromptHistory;
+  //   try {
+  //     if (!isNaN(parseInt(data.id)))
+  //       olderDocument = await this.prisma.prompt_history.findUnique({
+  //         where: {
+  //           id: parseInt(data.id),
+  //         },
+  //       });
+  //     else if (data.queryInEnglish && data.queryInEnglish!='')
+  //     olderDocument = await this.prisma.prompt_history.findUnique({
+  //       where: {
+  //         queryInEnglish: data.queryInEnglish
+  //       },
+  //     });
+  //     if (olderDocument) {
+  //       document = await this.prisma.prompt_history.update({
+  //         where: { id: parseInt(olderDocument.id) },
+  //         data: { timesUsed: olderDocument.timesUsed + 1 },
+  //       });
+  //     } else {
+  //       let embedding = (await this.aiToolsService.getEmbedding(data.queryInEnglish))[0];
+  //       try {
+  //         document = await this.prisma.prompt_history.create({
+  //           data: {
+  //             queryInEnglish: data.queryInEnglish,
+  //             responseInEnglish: data.responseInEnglish,
+  //             timesUsed: 0,
+  //             responseTime: data.responseTime,
+  //             metadata: data.metadata,
+  //             queryId: data.queryId,
+  //             pdfId: data.pdfId
+  //           },
+  //         });
+  //         await this.prisma.$queryRawUnsafe(
+  //           `UPDATE prompt_history SET pdf = '[${embedding
+  //             .map((x) => `${x}`)
+  //             .join(",")}]' WHERE id = ${document.id}`
+  //         );
+  //       } catch(error) {
+  //         this.logger.error(error)
+  //       }
+  //     }
+  //   } catch (error) {
+  //     throw new BadRequestException(error);
+  //   }
+  //   return document;
+  // }
+
+  async create(queryId): Promise<PromptHistory> {
+    let query = await this.prisma.query.findFirst({
+      where: {
+        id: queryId
+      }
+    })
+    if(!query) return null
+    let similarDocs = await this.prisma.similarity_search_response.findFirst({
+      where: {
+        queryId: queryId
+      }
+    })
+    if(!similarDocs) return null
+    let doc = await this.prisma.document.findFirst({
+      where: {
+        id: similarDocs.documentId
+      }
+    })
+    if(!doc) return null
+    let promptHistory = await this.prisma.prompt_history.findUnique({
+      where:{
+        queryInEnglish_pdfId: {
+          queryInEnglish: query.queryInEnglish,
+          pdfId: doc.pdfId
         }
       }
-    } catch (error) {
-      throw new BadRequestException(error);
+    })
+    if(promptHistory) return null
+    let embedding = (await this.aiToolsService.getEmbedding(query.queryInEnglish))[0];
+    if(embedding){
+      promptHistory = await this.prisma.prompt_history.create({
+        data:{
+          queryInEnglish: query.queryInEnglish,
+          responseInEnglish: query.responseInEnglish,
+          timesUsed: 0,
+          responseTime: query.responseTime,
+          metadata: {},
+          queryId: query.id,
+          pdfId: doc.pdfId
+        }
+      })
+      await this.prisma.$queryRawUnsafe(
+        `UPDATE prompt_history SET embedding = '[${embedding
+          .map((x) => `${x}`)
+          .join(",")}]' WHERE id = ${promptHistory.id}`
+      );
+      return promptHistory
     }
-    return document;
   }
 
   async findByCriteria(searchQueryDto: SearchPromptHistoryDto): Promise<any> {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
+    const queryEmbedding = `'[${embedding
+                    .map((x) => `${x}`)
+                    .join(",")}]'`
+    const pdfs = `ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}]`
     const results = await this.prisma
-      .$queryRawUnsafe(`SELECT * FROM match_prompt_history(
-                query_embedding := '[${embedding
-                  .map((x) => `${x}`)
-                  .join(",")}]',
-                pdfId := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
-                similarity_threshold := ${searchQueryDto.similarityThreshold},
-                match_count := ${searchQueryDto.matchCount}
-              );`);
-
+      .$queryRawUnsafe(`
+        SELECT
+          prompt_history.id AS id,
+          prompt_history."queryInEnglish" AS "queryInEnglish",
+          prompt_history."responseInEnglish" AS "responseInEnglish",
+          1 - (prompt_history.embedding <=> ${queryEmbedding}) AS similarity
+        FROM
+          prompt_history
+        WHERE
+          prompt_history."deletedAt" IS NULL  -- Added this condition to filter out deleted records
+          AND 1 - (prompt_history.embedding <=> ${queryEmbedding}) > ${searchQueryDto.similarityThreshold}
+          AND prompt_history."pdfId"::text = ANY(${pdfs})
+        ORDER BY
+          prompt_history.embedding <=> ${queryEmbedding}
+        LIMIT ${searchQueryDto.matchCount};
+      `);
     return results;
   }
 

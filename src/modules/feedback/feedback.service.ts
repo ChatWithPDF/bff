@@ -1,10 +1,14 @@
 import { Injectable } from "@nestjs/common";
 import { PrismaService } from "../../global-services/prisma.service";
 import { query } from "@prisma/client";
+import { PromptHistoryService } from "../prompt-history/prompt-history.service";
 
 @Injectable()
 export class FeedbackService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private promptHistoryService: PromptHistoryService
+  ) {}
 
   //using raw queries as right now unable to add unique index to id without createdAt
   //error while migrating: cannot create a unique index without the column "createdAt" (used in partitioning)
@@ -15,6 +19,7 @@ export class FeedbackService {
         "reaction" = 1, 
         "updatedAt" = NOW() 
         WHERE "id" = '${id}'`);
+      await this.promptHistoryService.create(id)
     } catch {
       return null;
     }

@@ -145,7 +145,7 @@ export const promptMachine = createMachine<PromptContext>({
               
             },
             {
-              target: 'getSimilarDocs',
+              target: 'findSimilarQuestion',
               actions: [
                 assign({prompt:(context,_)=>context.prompt,workflow:(context,_)=>context.workflow,stateErrorRateData:{
                   delayThreshold: 4000,
@@ -159,24 +159,24 @@ export const promptMachine = createMachine<PromptContext>({
           onError: 'handleError',
         },
       },
-      // findSimilarQuestion: {
-      //   entry: ['setStartTime'],
-      //   invoke: {
-      //     src: 'findSimilarQuestion',
-      //     onDone: [
-      //       {
-      //         cond: 'ifSimilarQuestionFound',
-      //         target: 'translateOutput',
-      //         actions: ['updateContextWithSimilarQuestion']
-      //       },
-      //       {
-      //         target: 'getSimilarDocs',
-      //         actions: []
-      //       }
-      //     ],
-      //     onError: 'handleError',
-      //   },
-      // },
+      findSimilarQuestion: {
+        entry: ['setStartTime'],
+        invoke: {
+          src: 'findSimilarQuestion',
+          onDone: [
+            {
+              cond: 'ifSimilarQuestionFound',
+              target: 'translateOutput',
+              actions: ['updateContextWithSimilarQuestion']
+            },
+            {
+              target: 'getSimilarDocs',
+              actions: []
+            }
+          ],
+          onError: 'handleError',
+        },
+      },
       getSimilarDocs: {
         entry: ['setStartTime'],
         invoke: {

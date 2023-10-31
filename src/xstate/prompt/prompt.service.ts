@@ -474,6 +474,7 @@ Answer:
                                          .replace('Based on the information provided, ', '')
                                          .replace('Based on the provided context, ','')
                                          .replace('Based on the provided context ','')
+                                         .replace(/HR/g,'OD')
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
@@ -498,17 +499,8 @@ Answer:
     },
 
     storeAndSendMessage: async (context) => {
-        // await promptHistoryService.createOrUpdate({
-        //     id: context.prompt.similarQuestion ? context.prompt.similarQuestion[0].id : null,
-        //     queryInEnglish: context.prompt.inputTextInEnglish,
-        //     responseInEnglish: context.prompt.outputInEnglish,
-        //     responseTime: new Date().getTime() - context.prompt.timestamp,
-        //     metadata: [],
-        //     queryId: context.prompt.input.messageId,
-        //     pdfId: context.prompt.input.pdfId,
-        // });
-        if(context.prompt.similarDocs && context.prompt.similarDocs.length > 0){
-            let data = JSON.parse(JSON.stringify(context.prompt.similarDocs))
+        if(context.prompt.similarDocs.topMatchedChunks && context.prompt.similarDocs.topMatchedChunks.length > 0){
+            let data = JSON.parse(JSON.stringify(context.prompt.similarDocs.topMatchedChunks))
             let similarDocsCreateData = data.map(e=>{
               e['content'] = e.content.replace(/\s{2,}/g, ' ')
               e['queryId'] = context.prompt.input.messageId
@@ -516,20 +508,10 @@ Answer:
               delete e.pdfId
               delete e.id
               delete e.metaData
-            //   delete e.heading
-            //   delete e.createdAt
-            //   delete e.updatedAt
-            //   delete e.userId
-            //   delete e.summary
+              delete e.chunkId
+              delete e.type
               return e
             })
-            console.log(similarDocsCreateData)
-            // id             Int      @id @default(autoincrement())
-            // documentId     Int
-            // content        String
-            // tags           String?
-            // similarity     Float
-            // queryId        String  @db.Uuid
             await prismaService.similarity_search_response.createMany({
               data: similarDocsCreateData
             })
