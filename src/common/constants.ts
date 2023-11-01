@@ -1,8 +1,6 @@
 import * as moment from "moment";
 
-export const REPHRASE_YOUR_QUESTION = (inputLanguage) =>
-inputLanguage && inputLanguage == 'en' ? "Please try rephrasing your question or try again later." :
-"ଦୟାକରି ଆପଣଙ୍କର ପ୍ରଶ୍ନର ପୁନରାବୃତ୍ତି କରିବାକୁ ଚେଷ୍ଟା କରନ୍ତୁ କିମ୍ବା ପରେ ପୁନର୍ବାର ଚେଷ୍ଟା କରନ୍ତୁ |";
+export const REPHRASE_YOUR_QUESTION = "Please try rephrasing your question or try again later."
 
 export const NO_CONTEXT_ANSWER = "Apologies, but I currently lack access to this information. Your query has been forwarded to the OD team, who will work on adding this data to my content repository. In the meantime, is there anything else I can assist you with?"
 
@@ -30,27 +28,20 @@ export const chatGPT3Prompt = (
 ];
 
 
-export const generalPrompt = (history, expertContext, userQuestion, neuralCoreference, employeeData) => {
+export const generalPrompt = (history, expertContext, userQuestion, neuralCoreference) => {
   let input = [
       {
         role: "system",
         content: 
 `
-You are a Employee onbaording assistant who helps with answering questions for Samagra employees based on the search results. If question is not relevant to search reults/corpus, refuse to answer
+You are a document chat assistant who helps with answering questions  based on the search results. 
+If question is not relevant to search reults/corpus, refuse to answer.
 
-Use below data while answering the question:
-General Information:
-Today's date: ${moment().format('MMM DD, YYYY (dddd)')}
-
-Follow the instructions while answering : 
-1. You compose a comprehensive reply to the query using the relevant Samagra Corpus given and quote verbatim from the corpus as much as possible mentioning the heading
-2. If no part of the content is relevant/useful to the answer do not use the content, just provide an answer that that relevant content is not available. 
+Follow the instructions while answering :
+1. You compose a comprehensive reply to the query using the relevant  Corpus given and quote verbatim from the corpus as much as possible 
+2. If no part of the content is relevant/useful to the answer do not use the content, just provide an answer that that relevant content is not available.
 3. Ensure you go through them all the content, reorganise them and then answer the query step by step.
-4. Structure the answers in bullet points and sections and provide any mentioned hyperlinks
-5.  If the questions is about holidays, then just show the holiday calendar given in the corpus and do not provide any additional details 
-6.  Omit reproducing information that doesn't concern me.
-7. No matter what, do not output false content
-
+4. No matter what, do not output false content
 
 Format of the Query and Answer
 Query: {question}
@@ -62,76 +53,17 @@ Answer: {answer}
         content:
 `
 ${expertContext}
-
-${userQuestion}
 `
-      }
-//       {
-//           role: "system",
-//           content:
-// `You are a helpful assistant who helps with answering questions for Samagra employees based on the provided information. Only answer based on the context provided and do not consider generic information. You provide context number in square brackets. You may use more than one context to answer. Some of the context is a summary of the image, so you can use pharases like "As shown in the image below" when using that context. The context with image will be in <> brackets along with the context number (example: <image 1>).
-
-// Use below data while answering the question:
-// General Information:
-// Today's date: ${moment().format('MMM DD, YYYY dddd')}
-
-// ${employeeData ? `
-// Information of the employee asking the question is given in JSON format below, use this data to give a personalized answer for this employee to the question asked, mention employee name in answer:
-// ${JSON.stringify(employeeData,null,3)}
-// `:''}
-
-// ${expertContext}
-
-// Examples shared below
-// ---------------------------------------------------
-// Question: How many leaves do I get in a year?
-
-// Context:
-// 1. You get 22 planned leaves in a year.
-// 2. You can avail 15 wedding leaves. <image>
-
-// Answer: You get 22 planned and 15 wedding leaves [1]  as shown in the image below <image 2>.
-// ---------------------------------------------------
-
-// Question:  How many total leaves do I get?
-// Context:
-// 1. You get 22 planned leaves in a year.
-// 2. You can avail 15 wedding leaves. <Image>
-// 3. You get 4 optional holidays to choose from as well.
-// 4. You can take sabbatical for 1 month without pay as well.
-
-// Answer: You get today 41 leave an year which included 22 planned leaves [1], 15 wedding leaves [2] and 4 optional holidays [3]. Additionaly, you may also take 1 month sabbatical without pay.
-// ---------------------------------------------------`
-//       ,}
-  ]
+      }]
   history.forEach(text => {
       input.push({
           role: text.indexOf('User:') != -1 ? "user": "assistant",
           content: text.replace('User:','').replace('AI: ','').trim()
       })
   });
-  input.pop()
   input.push({
       role: "user",
       content: neuralCoreference || userQuestion
   })
-  return input
-}
-
-export const restructureContentPrompt = (history, expertContext, userQuestion, neuralCoreference, employeeData) => {
-  let input = [
-    {
-      role: "system",
-      content: 
-`
-Restructure and organize the below Relevant Samagra Corpus according to the user question, do not use any genric infomation other than Samagra corpus:
-${expertContext}
-`
-    },
-    {
-      role: "user",
-      content: `${userQuestion}`
-    }
-  ]
   return input
 }

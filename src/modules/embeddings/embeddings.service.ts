@@ -4,7 +4,6 @@ import { document as Document } from "@prisma/client";
 import { PrismaService } from "../../global-services/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import { DocumentsResponse, DocumentWithEmbedding } from "./embeddings.model";
-import { PromptHistoryService } from "../prompt-history/prompt-history.service";
 import { AiToolsService } from "../aiTools/ai-tools.service";
 
 interface EmbeddingResponse {
@@ -17,7 +16,6 @@ export class EmbeddingsService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-    private promptHistoryService: PromptHistoryService,
     private aiToolsService: AiToolsService
   ) {
     this.aiToolsService = new AiToolsService(configService, prisma)
@@ -51,7 +49,6 @@ export class EmbeddingsService {
             },
           });
           if (olderDocument) {
-            this.promptHistoryService.softDeleteRelatedToDocument(data.id)
             if (olderDocument.tags == data.tags) {
               olderDocument.content = data.content;
               document = await this.prisma.document.update({
@@ -59,8 +56,6 @@ export class EmbeddingsService {
                 data: { content: data.content },
               });
             } else {
-              // get new embeddings for newer tags
-              // get new embeddings for newer tags if they have changed
               let embedding = (await this.aiToolsService.getEmbedding(data.tags))[0];
               document = await this.prisma.document.update({
                 where: { id: data.id },
@@ -99,7 +94,7 @@ export class EmbeddingsService {
     return response;
   }
 
-  async findByCriteria(searchQueryDto: SearchQueryDto, searchVia: string = 'summaryEmbedding', type = ""): Promise<any> {
+  async findByCriteria(searchQueryDto: SearchQueryDto): Promise<any> {
     const embedding: any = (
       await this.aiToolsService.getEmbedding(searchQueryDto.query)
     )[0];
@@ -110,81 +105,24 @@ export class EmbeddingsService {
     let similarity_threshold = searchQueryDto.similarityThreshold
     let match_count = searchQueryDto.matchCount
 
-    // const results = await this.prisma
-    //   .$queryRawUnsafe(`SELECT * FROM match_documents(
-    //     query_embedding := '[${embedding
-    //       .map((x) => `${x}`)
-    //       .join(",")}]',
-    //     pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
-    //     similarity_threshold := ${searchQueryDto.similarityThreshold},
-    //     match_count := ${searchQueryDto.matchCount}
-    //   );`);
-
     const results = await this.prisma
     .$queryRawUnsafe(`
       SELECT
       document.id as id,
-      CONCAT('Heading: ', document.heading, E'\n', 'Content: ', document.content) AS content,
+      document.content AS content,
       document.tags as tags,
-      1 - (document."${searchVia}" <=> '${query_embedding}') as similarity,
-      document."pdfId" as "pdfId",
-      document."metaData" as "metaData",
-      document."chunkId" as "chunkId",
-      document.type as type
-      FROM
-        document
-      WHERE 
-        document."pdfId"::text = ANY(${pdfIds})
-        AND 1 - (document."${searchVia}" <=> '${query_embedding}') > ${similarity_threshold}
-        ${type? `AND document.type = '${type}'`:''}
-      ORDER BY
-        document."${searchVia}" <=> '${query_embedding}'
-      LIMIT ${match_count};`
-    );
-
-    return results;
-  }
-
-  async findByCriteriaViaHeading(searchQueryDto: SearchQueryDto): Promise<any> {
-    const embedding: any = (
-      await this.aiToolsService.getEmbedding(searchQueryDto.query)
-    )[0];
-    let query_embedding = `[${embedding
-      .map((x) => `${x}`)
-      .join(",")}]`
-    let pdfIds = `ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}]`
-    let similarity_threshold = searchQueryDto.similarityThreshold
-    let match_count = searchQueryDto.matchCount
-
-    // const results = await this.prisma
-    //   .$queryRawUnsafe(`SELECT * FROM match_documents(
-    //     query_embedding := '[${embedding
-    //       .map((x) => `${x}`)
-    //       .join(",")}]',
-    //     pdfIds := ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}],
-    //     similarity_threshold := ${searchQueryDto.similarityThreshold},
-    //     match_count := ${searchQueryDto.matchCount}
-    //   );`);
-
-    const results = await this.prisma
-    .$queryRawUnsafe(`
-      SELECT
-      document.id as id,
-      document.content as content,
-      document.tags as tags,
-      1 - (document."headingEmbedding" <=> '${query_embedding}') as similarity,
+      1 - (document."contentEmbedding" <=> '${query_embedding}') as similarity,
       document."pdfId" as "pdfId",
       document."metaData" as "metaData"
       FROM
         document
       WHERE 
         document."pdfId"::text = ANY(${pdfIds})
-        AND 1 - (document."headingEmbedding" <=> '${query_embedding}') > ${similarity_threshold}
+        AND 1 - (document."contentEmbedding" <=> '${query_embedding}') > ${similarity_threshold}
       ORDER BY
-        document."headingEmbedding" <=> '${query_embedding}'
+        document."contentEmbedding" <=> '${query_embedding}'
       LIMIT ${match_count};`
     );
-
     return results;
   }
 

@@ -6,7 +6,6 @@ import { ConfigModule, ConfigService } from "@nestjs/config";
 import { EmbeddingsModule } from "./modules/embeddings/embeddings.module";
 import { UserModule } from "./modules/user/user.module";
 import { EmbeddingsService } from "./modules/embeddings/embeddings.service";
-import { PromptHistoryService } from "./modules/prompt-history/prompt-history.service";
 import { APP_PIPE } from "@nestjs/core";
 import { CustomLogger } from "./common/logger";
 import { AiToolsService } from "./modules/aiTools/ai-tools.service";
@@ -30,7 +29,6 @@ import { FeedbackModule } from "./modules/feedback/feedback.module";
     ConfigService,
     AiToolsService,
     EmbeddingsService,
-    PromptHistoryService,
     {
       provide: APP_PIPE,
       useClass: ValidationPipe,

@@ -3,9 +3,7 @@ import { PromptDto } from "./app.controller";
 import { Language } from "./language";
 import { PrismaService } from "./global-services/prisma.service";
 import { ConfigService } from "@nestjs/config";
-import { EmbeddingsService } from "./modules/embeddings/embeddings.service";
 import { CustomLogger } from "./common/logger";
-import { PromptHistoryService } from "./modules/prompt-history/prompt-history.service";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
@@ -48,9 +46,7 @@ export class AppService {
   private logger: CustomLogger;
   constructor(
     private prisma: PrismaService,
-    private configService: ConfigService,
-    private embeddingsService: EmbeddingsService,
-    private promptHistoryService: PromptHistoryService
+    private configService: ConfigService
   ) {
     this.logger = new CustomLogger("AppService");
   }

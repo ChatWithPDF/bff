@@ -41,6 +41,7 @@ export class AppController {
     let prompt: Prompt = {
       input: promptDto,
     };
+    console.log(prompt)
     const promptProcessingService = interpret(
       promptMachine.withContext({
         prompt
@@ -55,8 +56,8 @@ export class AppController {
     let result = promptProcessingService.getSnapshot().context.prompt
     // Stop the state machine
     promptProcessingService.stop();
-    if(result?.similarDocs?.topMatchedChunks)
-    result.similarDocs.topMatchedChunks = result?.similarDocs?.topMatchedChunks?.length && result?.similarDocs?.topMatchedChunks?.map((doc)=>{
+    if(result?.similarDocs)
+    result.similarDocs = result?.similarDocs?.length && result?.similarDocs.map((doc)=>{
         return {
             ...doc,
             content: doc.content.replace(/\s{2,}/g, ' ').replaceAll('\n',' ')
@@ -66,8 +67,7 @@ export class AppController {
       id: result.input.messageId,
       neuralCoreferencedQuestion: result.neuralCoreference,
       output: result.output,
-      outputInEnglish: result.outputInEnglish,
-      context: result?.similarDocs?.topMatchedChunks?.length && result?.similarDocs?.topMatchedChunks
+      context: result?.similarDocs.length && result?.similarDocs
     };
   }
 

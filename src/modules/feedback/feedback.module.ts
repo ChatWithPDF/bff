@@ -4,7 +4,6 @@ import { FeedbackController } from "./feedback.controller";
 import { FeedbackService } from "./feedback.service";
 import { APP_PIPE } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
-import { PromptHistoryService } from "../prompt-history/prompt-history.service";
 import { ConfigService } from "@nestjs/config";
 import { AiToolsService } from "../aiTools/ai-tools.service";
 
@@ -13,7 +12,6 @@ import { AiToolsService } from "../aiTools/ai-tools.service";
   providers: [
     AiToolsService,
     ConfigService,
-    PromptHistoryService,
     FeedbackService,
     PrismaService,
     {

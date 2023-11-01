@@ -64,7 +64,6 @@ export class PDFController {
         let document = await this.prisma.document.create({
             data:{
                 content: data[i].content,
-                summary: data[i].content,
                 pdfId,
                 pdfName: csvFilePath,
                 metaData: {
@@ -85,96 +84,5 @@ export class PDFController {
         );
     }
     return pdfId;
-  }
-
-  @Post('addpdfdata')
-  async addData(){
-    let csvnames = ['document_data']
-    let pdfIds= [];
-    for(let i=0;i<csvnames.length;i++){
-      let pdfId = uuidv4()
-      const csvFilePath = path.join(__dirname, `../../../files/${csvnames[i]}.csv`);
-      console.log('processing CSV',csvFilePath);
-      let data = await this.pdfService.processCSV(csvFilePath)
-      console.log('CSV processed',csvFilePath)
-      console.log('adding data to db',csvFilePath)
-      for(let i=0;i<data.length;i++){
-        let document = await this.prisma.document.create({
-            data:{
-                content: data[i].content,
-                heading: data[i].heading,
-                summary: data[i].summary,
-                pdfId,
-                pdfName: csvFilePath,
-                metaData: {
-                  startPage: data[i].start_page,
-                  endPage: data[i].end_page
-                },
-                chunkId: data[i]?.chunkId ? parseInt(data[i].chunkId): null,
-                type: data[i].type
-            }
-        })
-        await this.prisma.$queryRawUnsafe(
-            `UPDATE document 
-              SET "contentEmbedding" = '[${JSON.parse(data[i].contentEmbedding)
-              .map((x) => `${x}`)
-              .join(",")}]', 
-              "headingEmbedding" = '[${JSON.parse(data[i].headingEmbedding)
-                .map((x) => `${x}`)
-                .join(",")}]', 
-              "summaryEmbedding" = '[${JSON.parse(data[i].summaryEmbedding)
-                .map((x) => `${x}`)
-                .join(",")}]'
-              WHERE id = ${document.id}`
-          );
-      }
-      console.log('data added to db',csvFilePath)
-      pdfIds.push({
-        id:pdfId,
-        name: csvnames[i]
-      })
-    }
-    return pdfIds;
-  }
-
-  @Post('create-or-update-employee')
-  async addEmployeeData(){
-    let csvnames = ['EmployeeDb']
-    for(let i=0;i<csvnames.length;i++){
-      const csvFilePath = path.join(__dirname, `../../../files/${csvnames[i]}.csv`);
-      console.log('processing CSV',csvFilePath);
-      let data = await this.pdfService.processCSV(csvFilePath)
-      console.log('CSV processed',csvFilePath)
-      console.log('adding data to db',csvFilePath)
-      for(let i=0;i<data.length;i++){
-        let employee = {
-          employeeId: data[i].employeeId,
-          firstName: data[i].firstName,
-          lastName: data[i].lastName,
-          middleName: data[i].middleName,
-          email: data[i].email,
-          track: data[i].track,
-          designation: data[i].designation,
-          role: data[i].role,
-          program: data[i].program,
-          dateOfJoining: parse(data[i].dateOfJoining, 'dd-MM-yyyy', new Date()),
-          dateOfBirth: parse(data[i].dateOfBirth, 'dd-MM-yyyy', new Date()),
-          age: data[i].age,
-          gender: data[i].gender,
-          maritalStatus: data[i].maritalStatus, 
-          mobileNumber: data[i].mobileNumber.replace("91-",""),
-          presentAddress: data[i].presentAddress,
-          permanentAddress: data[i].permanentAddress
-        }
-        await this.prisma.employee.upsert({
-          where: { employeeId: employee.employeeId },
-          update: { ...employee },
-          create: { ...employee },
-        });
-      }
-      console.log('data added to db',csvFilePath)
-      return `data added to db, ${csvFilePath}`
-    }
-    return "Error Occurred, Unable to add employee data";
   }
 }

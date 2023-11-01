@@ -5,13 +5,11 @@ import { PrismaService } from "../../global-services/prisma.service";
 import { ConfigService } from "@nestjs/config";
 import { APP_PIPE } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
-import { PromptHistoryService } from "../prompt-history/prompt-history.service";
 import { AiToolsService } from "../aiTools/ai-tools.service";
 
 @Module({
   providers: [
-    EmbeddingsService, 
-    PromptHistoryService,
+    EmbeddingsService,
     PrismaService, 
     ConfigService,
     AiToolsService,

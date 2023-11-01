@@ -81,21 +81,6 @@ export class UserService {
     }
   }
 
-  async getUserProfile(
-    mobileNumber: string
-  ) {
-    try {
-      let employee = await this.prisma.employee.findFirst({
-          where: {
-              mobileNumber: mobileNumber
-          }
-      })
-      return employee
-    } catch(error) {
-        return null
-    }
-  }
-
   async conversationsList(
     userId: string,
   ): Promise<any> {

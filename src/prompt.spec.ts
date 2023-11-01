@@ -6,8 +6,6 @@ import { ConfigService } from '@nestjs/config';
 import { PrismaService } from './global-services/prisma.service';
 import { AppController, PromptDto } from './app.controller';
 import { AppService } from './app.service';
-import { EmbeddingsService } from './modules/embeddings/embeddings.service';
-import { PromptHistoryService } from './modules/prompt-history/prompt-history.service';
 const similarity = require('compute-cosine-similarity');
 const ExcelJS = require('exceljs');
 const path = require('path');
@@ -48,13 +46,6 @@ describe('API Testing', () => {
           userId:"cbdb186f-14b3-450d-bcb3-5b3c5474d749"
         }
       })
-      for(let i=0;i<queryIds.length;i++){
-        await prismaService.prompt_history.deleteMany({
-          where: {
-            queryId: queryIds[i].queryId
-          }
-        })
-      }
     }
     process.env.RUN_MANUAL_TEST = 'false';
     await app.close();
@@ -73,22 +64,9 @@ describe('API Testing', () => {
             "messageId": uuidv4(),
             "conversationId":"aa66ab84-8665-5ef8-a720-ee2fd15e9164"
           }
-          let promptHistoryService: PromptHistoryService = new PromptHistoryService(
-            prismaService,
-            configService,
-            aiToolsService
-          );
-          let embeddingsService: EmbeddingsService = new EmbeddingsService(
-            prismaService,
-            configService,
-            promptHistoryService,
-            aiToolsService
-          );
           let appService: AppService = new AppService(
             prismaService,
-            configService,
-            embeddingsService,
-            promptHistoryService
+            configService
           );
           appController = new AppController(appService);
           responseData = await appController.prompt(body)
