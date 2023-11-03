@@ -317,7 +317,6 @@ Answer:
                                          .replace('Based on the provided context, ','')
                                          .replace('Based on the provided context ','')
                                          .replace(/HR/g,'OD')
-                                         .replace('I apologize for the confusion earlier. ','')
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
