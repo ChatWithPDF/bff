@@ -297,7 +297,7 @@ Query: ${context.prompt.neuralCoreference}
 Answer:
 `
             let expertContext = "Relevant Samagra Corpus:\n"
-            context.prompt.similarDocs.topMatchedChunks && context.prompt.similarDocs.topMatchedChunks.forEach((doc)=> {
+            context.prompt.similarDocs?.topMatchedChunks && context.prompt.similarDocs?.topMatchedChunks.forEach((doc)=> {
                 expertContext+=`${doc.content}\n`
             })
             let prompt;
@@ -325,8 +325,8 @@ Answer:
     },
 
     storeAndSendMessage: async (context) => {
-        if(context.prompt.similarDocs.topMatchedChunks && context.prompt.similarDocs.topMatchedChunks.length > 0){
-            let data = JSON.parse(JSON.stringify(context.prompt.similarDocs.topMatchedChunks))
+        if(context.prompt.similarDocs?.topMatchedChunks && context.prompt.similarDocs?.topMatchedChunks.length > 0){
+            let data = JSON.parse(JSON.stringify(context.prompt.similarDocs?.topMatchedChunks))
             let similarDocsCreateData = data.map(e=>{
               e['content'] = e.content.replace(/\s{2,}/g, ' ')
               e['queryId'] = context.prompt.input.messageId
