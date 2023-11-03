@@ -63,7 +63,7 @@ export const promptActions = {
     prompt: {
       ...context.prompt,
       similarQuestion: event.data?.length ? event.data : [],
-      output: event.data?.length ? event.data[0].response: '',
+      output: event.data?.length ? event.data[0].responseInEnglish: '',
       responseType: "Response given from previous similar question with similarity > 0.85"
     },
     workflow: [...context.workflow,{
