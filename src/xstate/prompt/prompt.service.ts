@@ -28,43 +28,16 @@ const embeddingsService = new EmbeddingsService(
 const logger = new CustomLogger('promptService')
 
 export const promptServices = {
-
-    detectLanguage: async (context) => {
-        // let response = await aiToolsService.detectLanguage(context.prompt.input.body)
-        // return response
-        return {
-            language: Language.en,
-            error: null
-        }
-    },
-
-    translateInput: async (context) => {
-        if(context.prompt.inputLanguage != Language.en) {
-            let response = await aiToolsService.translate(
-                context.prompt.inputLanguage as Language,
-                Language.en,
-                context.prompt.input.body,
-                context.prompt.input.mobileNumber
-            )
-            return response
-        } else {
-            return {
-                translated: context.prompt.input.body,
-                error: null
-            }
-        }
-    },
-
     getUserHistory: async (context) => {
         let userHistoryWhere: any = {};
         userHistoryWhere.userId = context.prompt.input.userId;
-        userHistoryWhere.queryInEnglish = {
+        userHistoryWhere.query = {
             not: context.prompt.input.body
         }
-        if(!context.prompt.input.conversationId) return [`User: ${context.prompt.inputTextInEnglish}`]
+        if(!context.prompt.input.conversationId) return [`User: ${context.prompt.input.body}`]
         userHistoryWhere.conversationId = context.prompt.input.conversationId;
         const userHistory = await prismaService.query.findMany({
-            distinct:['queryInEnglish'],
+            distinct:['query'],
             where: userHistoryWhere,
             orderBy: {
                 createdAt: "desc",
@@ -73,10 +46,10 @@ export const promptServices = {
         });
         let history = []
         for (let i = 0; i < userHistory.length; i++) {
-            history.push(`User: ${userHistory[i].queryInEnglish}`);
-            history.push(`AI: ${userHistory[i].responseInEnglish}`);
+            history.push(`User: ${userHistory[i].query}`);
+            history.push(`AI: ${userHistory[i].response}`);
           }
-        history.push(`User: ${context.prompt.inputTextInEnglish}`);
+        history.push(`User: ${context.prompt.input.body}`);
         return history
     },
 
@@ -112,23 +85,8 @@ export const promptServices = {
 
         if(context.prompt.input.mobileNumber && allDocumentUsers.indexOf(context.prompt.input.mobileNumber) != -1) isAllDocumentUser = true 
 
-        // let similarityThresholdForHeading = flags.getFeatureValue('similarity_threshold_for_heading');
-        // if(similarityThresholdForHeading) similarityThresholdForHeading = parseFloat(similarityThresholdForHeading)
-        // else similarityThresholdForHeading = 0.85
-
-        // let similarityThresholdForContent = flags.getFeatureValue('similarity_threshold_for_content');
-        // if(similarityThresholdForContent) similarityThresholdForContent = parseFloat(similarityThresholdForContent)
-        // else similarityThresholdForContent = 0.85
-
-        let pdfIds = context.prompt.input.pdfId ? 
-                        [context.prompt.input.pdfId] : 
-                        context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
-                        context.prompt.input.pdfIds :
-                        JSON.parse(configService.get('DEFAULT_PDFS'))
-                        
         let contentDocs = await embeddingsService.findByCriteria({
                 query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-                pdfIds,
                 similarityThreshold: 0,
                 matchCount: 6,
             },
@@ -138,7 +96,6 @@ export const promptServices = {
 
         let headingDocs = await embeddingsService.findByCriteria({
                 query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-                pdfIds,
                 similarityThreshold: 0,
                 matchCount: 6,
             },
@@ -148,7 +105,6 @@ export const promptServices = {
 
         let summaryDocs = await embeddingsService.findByCriteria({
                 query: context.prompt.neuralCoreference.replace("Samagra", "").replace("Samagra's", ""),
-                pdfIds,
                 similarityThreshold: 0,
                 matchCount: 6,
             },
@@ -157,7 +113,7 @@ export const promptServices = {
         );
 
         return { 
-            contentDocs, 
+            contentDocs,
             headingDocs, 
             summaryDocs, 
             documentsFound: contentDocs.length || headingDocs.length || summaryDocs.length 
@@ -196,96 +152,9 @@ export const promptServices = {
             if(case4LowerThresh) case4LowerThresh = parseFloat(case4LowerThresh)
             else case4LowerThresh = 0.81
 
-            // let case_matched = 0
-            // let relevant_corpus = []
-            // const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
-
-            // let highestSimilarityThresholdForSummary = flags.getFeatureValue('highest_similarity_threshold_for_direct_answer_via_summary');
-            // if(highestSimilarityThresholdForSummary) highestSimilarityThresholdForSummary = parseFloat(highestSimilarityThresholdForSummary)
-            // else highestSimilarityThresholdForSummary = 0.91
-
-            // let highestSimilarityThresholdForHeading = flags.getFeatureValue('highest_similarity_threshold_for_direct_answer_via_heading');
-            // if(highestSimilarityThresholdForHeading) highestSimilarityThresholdForHeading = parseFloat(highestSimilarityThresholdForHeading)
-            // else highestSimilarityThresholdForHeading = 0.91
-
-            // let deltaForTopHeading = flags.getFeatureValue('delta_for_top_heading');
-            // if(deltaForTopHeading) deltaForTopHeading = parseFloat(deltaForTopHeading)
-            // else deltaForTopHeading = 0.03
-
-            // let deltaForTopSummary = flags.getFeatureValue('delta_for_top_summary');
-            // if(deltaForTopSummary) deltaForTopSummary = parseFloat(deltaForTopSummary)
-            // else deltaForTopSummary = 0.03
-
             let hitsContent: any = context.prompt.similarDocs.contentDocs
             let hitsHeading: any = context.prompt.similarDocs.headingDocs
             let hitsSummary: any = context.prompt.similarDocs.summaryDocs
-
-            // console.log("All content docs")
-            // console.log(contentDocs)
-            // console.log("highest matched content docs")
-            // let topMatchedContentDocs = filterArrayByDeltaAndCutoff(contentDocs,0.03,0.85)
-            // console.log(topMatchedContentDocs)
-
-            // console.log("All heading docs")
-            // console.log(headingDocs)
-            // console.log("highest matched heading docs")
-            // let topMatchedHeadingDocs = filterArrayByDeltaAndCutoff(headingDocs,deltaForTopHeading,highestSimilarityThresholdForHeading)
-            // console.log(topMatchedHeadingDocs)
-
-            // console.log("All summary docs")
-            // console.log(summaryDocs)
-            // console.log("highest matched summary docs")
-            // let topMatchedSummaryDocs = filterArrayByDeltaAndCutoff(summaryDocs,deltaForTopSummary,highestSimilarityThresholdForSummary)
-            // console.log(topMatchedSummaryDocs)
-
-            // let topMatchedHeadingAndSummaryDocs = uniqueUnion(topMatchedHeadingDocs,topMatchedSummaryDocs)
-            // console.log("highest matched summary and heading docs")
-            // console.log(topMatchedHeadingAndSummaryDocs)
-
-            // if(topMatchedHeadingAndSummaryDocs.length){
-            //     if(topMatchedHeadingAndSummaryDocs.length == 1){
-            //         //condition 1
-            //         return {
-            //             topMatchedChunks: topMatchedHeadingAndSummaryDocs,
-            //             matchType: 1
-            //         }
-            //     } else {
-            //         //condition 2
-            //         return {
-            //             topMatchedChunks: topMatchedHeadingAndSummaryDocs,
-            //             matchType: 2
-            //         }
-            //     }
-            // } else {
-            //     if(summaryDocs.length){
-            //         //condtion 3
-            //         return {
-            //             topMatchedChunks: summaryDocs.slice(0,3),
-            //             matchType: 3
-            //         }
-            //     }
-            //     if(headingDocs.length){
-            //         //condition 4
-            //         return {
-            //             topMatchedChunks: headingDocs.slice(0,3),
-            //             matchType: 4
-            //         }
-            //     }
-            //     if(topMatchedContentDocs.length){
-            //         //condition 5
-            //         return {
-            //             topMatchedChunks: topMatchedContentDocs.slice(0,3),
-            //             matchType: 5
-            //         }
-            //     }
-            //     if(contentDocs.length){
-            //         //condition 6
-            //         return {
-            //             topMatchedChunks: contentDocs.slice(0,3),
-            //             matchType: 6
-            //         }
-            //     }
-            // }
 
             let caseMatched = 0;
             const relevantCorpus = [];
@@ -381,49 +250,22 @@ export const promptServices = {
                     matchType: 0
                 }
             } else {
-                console.log("Case Matched", caseMatched);
                 if (relevantCorpus.length === 0) {
-                console.log("Answer", "Nothing matched");
                 return {
                     topMatchedChunks: [],
                     matchType: 0
                 }
                 }
                 if (caseMatched === 3) {
-                    // let docId = relevantCorpus[0]
                     return {
                         topMatchedChunks: filterUnique([relevantCorpus[0]],[...hitsContent, ...hitsHeading, ...hitsSummary]),
                         matchType: 1
                     }
-                    // let doc = await prismaService.document.findFirst({
-                    //     where:{id:docId}
-                    // })
-                    // return doc
                 } else {
                     return {
                         topMatchedChunks: filterUnique(relevantCorpus,[...hitsContent, ...hitsHeading, ...hitsSummary]),
                         matchType: 4
                     }
-                    // let relavantDocs = []
-                    // for (const relavantId of relevantCorpus) {
-                    //     let doc = await prismaService.document.findFirst(
-                    //         {
-                    //             where: {id: relavantId}
-                    //         }
-                    //     )
-                    //     relavantDocs.push(doc)
-                    // }
-                    // return relavantDocs
-                //   const chunks = [];
-                //   for (const rc of relevantCorpus) {
-                //     let content = "";
-                //     content += "Heading: " + data[rc]['heading'] + "\n";
-                //     content += "Content: " + data[rc]['content'] + "\n";
-                //     chunks.push(content);
-                //   }
-            
-                //   // console.log(chunks);
-                //   console.log("Answer", getQnaResponse(chunks, queries[0]));
                 }
             }
         } catch (error) {
@@ -456,7 +298,7 @@ Answer:
 `
             let expertContext = "Relevant Samagra Corpus:\n"
             context.prompt.similarDocs.topMatchedChunks && context.prompt.similarDocs.topMatchedChunks.forEach((doc)=> {
-                expertContext+=`${doc.id}. ${doc.content}\n`
+                expertContext+=`${doc.content}\n`
             })
             let prompt;
             if(context.prompt.similarDocs.matchType == 1 ){
@@ -479,23 +321,6 @@ Answer:
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
-        }
-    },
-
-    translateOutput: async (context) => {
-        if(context.prompt.inputLanguage != Language.en) {
-            let response = await aiToolsService.translate(
-                Language.en,
-                context.prompt.inputLanguage as Language,
-                context.prompt.outputInEnglish,
-                context.prompt.input.mobileNumber
-            )
-            return response
-        } else {
-            return {
-                translated: context.prompt.outputInEnglish,
-                error: null
-            }
         }
     },
 
@@ -522,31 +347,37 @@ Answer:
     },
 
     done: async (context) => {
-        logger.logWithCustomFields({
-            userId: context.prompt.input.userId,
-            messageId: context.prompt.input.messageId
-        },'verbose')('done',context)
-        await prismaService.query.create({
-            data: {
-              id: context.prompt.input.messageId,
-              userId: context.prompt.input.userId,
-              query: context.prompt.input.body,
-              response: context.prompt.output,
-              responseTime: new Date().getTime() - context.prompt.timestamp,
-              queryInEnglish: context.prompt.inputTextInEnglish,
-              responseInEnglish: context.prompt.outputInEnglish,
-              conversationId: context.prompt.input.conversationId,
-              coreferencedPrompt: context.prompt.neuralCoreference,
-              errorRate: 0,
-              responseType: context.prompt.responseType,
-              workflow: {
-                create: {
+        // logger.logWithCustomFields({
+        //     userId: context.prompt.input.userId,
+        //     messageId: context.prompt.input.messageId
+        // },'verbose')('done',context)
+        try{
+            let query = await prismaService.query.create({
+                data: {
+                  id: context.prompt.input.messageId,
                   userId: context.prompt.input.userId,
-                  content: context.workflow,
+                  query: context.prompt.input.body,
+                  response: context.prompt.output,
+                  responseTime: new Date().getTime() - context.prompt.timestamp,
+                  conversationId: context.prompt.input.conversationId,
+                  coreferencedPrompt: context.prompt.neuralCoreference,
+                  errorRate: 0,
+                  responseType: context.prompt.responseType,
+                  mobileNumber: context.prompt.input.mobileNumber,
+                  userName: `${context.prompt.employeeData?.firstName || ''}${context.prompt.employeeData?.middleName ? ` ${context.prompt.employeeData?.middleName}` : ''}${context.prompt.employeeData?.lastName? ` ${context.prompt.employeeData?.lastName}`: ''}`,
+                  workflow: {
+                    create: {
+                      userId: context.prompt.input.userId,
+                      content: context.workflow,
+                    },
+                  }
                 },
-              }
-            },
-        });
+            });
+        } catch(error){
+            console.log(error)
+        }
+        
+        
         return context
     },
 

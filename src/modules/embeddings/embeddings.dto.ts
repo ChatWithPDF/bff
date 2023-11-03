@@ -19,9 +19,6 @@ export class SearchQueryDto {
   @IsDefined({ message: "Query needs to be defined to search documents" })
   query: string;
 
-  @IsDefined({ message: "pdfId needs to be defined to search a certain PDF" })
-  pdfIds: Array<string>;
-
   @IsDefined({ message: "Similarity Threashold needs to be defined" })
   similarityThreshold: number;
 

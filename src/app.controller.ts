@@ -66,7 +66,6 @@ export class AppController {
       id: result.input.messageId,
       neuralCoreferencedQuestion: result.neuralCoreference,
       output: result.output,
-      outputInEnglish: result.outputInEnglish,
       context: result?.similarDocs?.topMatchedChunks?.length && result?.similarDocs?.topMatchedChunks
     };
   }

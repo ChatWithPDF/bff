@@ -5,6 +5,7 @@ import { AiToolsService } from "../aiTools/ai-tools.service";
 import * as fs from 'fs';
 import * as csvParser from 'csv-parser';
 import * as PDFParser from 'pdf-parse';
+const path = require('path');
 
 @Injectable()
 export class PDFService {
@@ -51,6 +52,15 @@ export class PDFService {
     } catch (error) {
       console.error('Error parsing PDF:', error);
     }
+  }
+
+  async replacePDFHeader(replace,replaceWith: string, fileName) {
+    const csvFilePath = path.join(__dirname, `../../../files/${fileName}`);
+    const csvFile = fs.readFileSync(csvFilePath, 'utf8');
+    const lines = csvFile.split('\n');
+    lines[0] =  lines[0].replace(replace,replaceWith)
+    const updatedCsv = lines.join('\n');
+    fs.writeFileSync(csvFilePath, updatedCsv);
   }
 
 }

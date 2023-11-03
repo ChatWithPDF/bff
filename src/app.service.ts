@@ -1,25 +1,16 @@
 import { Injectable } from "@nestjs/common";
 import { PromptDto } from "./app.controller";
-import { Language } from "./language";
 import { PrismaService } from "./global-services/prisma.service";
 import { ConfigService } from "@nestjs/config";
-import { EmbeddingsService } from "./modules/embeddings/embeddings.service";
 import { CustomLogger } from "./common/logger";
-import { PromptHistoryService } from "./modules/prompt-history/prompt-history.service";
 const fetch = require('node-fetch'); 
-const { Headers } = fetch;
 
 // Overlap between LangchainAI and Prompt-Engine
 export interface Prompt {
   input: PromptDto;
   output?: string;
-  inputLanguage?: Language;
-  inputTextInEnglish?: string;
   maxTokens?: number;
-  outputLanguage?: Language;
   similarDocs?: any;
-
-  // More output metadata
   timeTaken?: number;
   timestamp?: number;
   responseType?: string;
@@ -49,8 +40,6 @@ export class AppService {
   constructor(
     private prisma: PrismaService,
     private configService: ConfigService,
-    private embeddingsService: EmbeddingsService,
-    private promptHistoryService: PromptHistoryService
   ) {
     this.logger = new CustomLogger("AppService");
   }

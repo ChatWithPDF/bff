@@ -22,13 +22,13 @@ const editFileName = (req: Request, file: Express.Multer.File, callback) => {
   callback(null, `${name}-${randomName}${fileExtName}`);
 };
 
-export const imageFileFilter = (
+export const csvFileFilter = (
   req: Request,
   file: Express.Multer.File,
   callback,
 ) => {
-  if (!file.originalname.match(/\.(pdf)$/)) {
-    return callback(new UnsupportedMediaTypeException('Only pdf files are allowed!'), false);
+  if (!file.originalname.match(/\.(csv)$/)) {
+    return callback(new UnsupportedMediaTypeException('Only csv files are allowed!'), false);
   }
   callback(null, true);
 };
@@ -43,76 +43,102 @@ export class PDFController {
   ) {
     this.aiToolsService = new AiToolsService(configService, prisma)
   }
-  @Post('upload')
+  // @Post('upload')
+  // @UseInterceptors(
+  //   FastifyFileInterceptor('file', {
+  //     storage: diskStorage({
+  //       destination: './files',
+  //       filename: editFileName,
+  //     }),
+  //     fileFilter: imageFileFilter,
+  //   })
+  // )
+  // async uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body, @Headers() headers) {
+  //   let pdfId = uuidv4()
+  //   await this.aiToolsService.getPDFChunks(file.path,pdfId)
+  //   await this.aiToolsService.getCSVFromChunks(pdfId)
+  //   const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
+  //   let data = await this.pdfService.processCSV(csvFilePath)
+  //   await unlink(csvFilePath)
+  //   for(let i=0;i<data.length;i++){
+  //       let document = await this.prisma.document.create({
+  //           data:{
+  //               content: data[i].content,
+  //               summary: data[i].content,
+  //               pdfId,
+  //               pdfName: csvFilePath,
+  //               metaData: {
+  //                 startPage: data[i].start_page,
+  //                 endPage: data[i].end_page
+  //               }
+  //           }
+  //       })
+  //       await this.prisma.$queryRawUnsafe(
+  //         `UPDATE document 
+  //           SET "contentEmbedding" = '[${JSON.parse(data[i].embeddings)
+  //           .map((x) => `${x}`)
+  //           .join(",")}]', 
+  //           "summaryEmbedding" = '[${JSON.parse(data[i].embeddings)
+  //             .map((x) => `${x}`)
+  //             .join(",")}]'
+  //           WHERE id = ${document.id}`
+  //       );
+  //   }
+  //   return pdfId;
+  // }
+
+  @Post('addData')
   @UseInterceptors(
     FastifyFileInterceptor('file', {
       storage: diskStorage({
         destination: './files',
         filename: editFileName,
       }),
-      fileFilter: imageFileFilter,
+      fileFilter: csvFileFilter,
     })
   )
-  async uploadFile(@UploadedFile() file: Express.Multer.File, @Body() body, @Headers() headers) {
-    let pdfId = uuidv4()
-    await this.aiToolsService.getPDFChunks(file.path,pdfId)
-    await this.aiToolsService.getCSVFromChunks(pdfId)
-    const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
-    let data = await this.pdfService.processCSV(csvFilePath)
-    await unlink(csvFilePath)
-    for(let i=0;i<data.length;i++){
-        let document = await this.prisma.document.create({
-            data:{
-                content: data[i].content,
-                summary: data[i].content,
-                pdfId,
-                pdfName: csvFilePath,
-                metaData: {
-                  startPage: data[i].start_page,
-                  endPage: data[i].end_page
-                }
-            }
-        })
-        await this.prisma.$queryRawUnsafe(
-          `UPDATE document 
-            SET "contentEmbedding" = '[${JSON.parse(data[i].embeddings)
-            .map((x) => `${x}`)
-            .join(",")}]', 
-            "summaryEmbedding" = '[${JSON.parse(data[i].embeddings)
-              .map((x) => `${x}`)
-              .join(",")}]'
-            WHERE id = ${document.id}`
-        );
-    }
-    return pdfId;
-  }
-
-  @Post('addpdfdata')
-  async addData(){
-    let csvnames = ['document_data']
-    let pdfIds= [];
-    for(let i=0;i<csvnames.length;i++){
-      let pdfId = uuidv4()
-      const csvFilePath = path.join(__dirname, `../../../files/${csvnames[i]}.csv`);
-      console.log('processing CSV',csvFilePath);
+  async addData(@UploadedFile() file: Express.Multer.File){
+      await this.aiToolsService.getCSVFromChunks(file.filename)
+      await this.pdfService.replacePDFHeader(",embeddings",",contentEmbedding",file.filename)
+      await this.pdfService.replacePDFHeader("content,heading,","ignore1,content,",file.filename)
+      await this.aiToolsService.getCSVFromChunks(file.filename)
+      await this.pdfService.replacePDFHeader(",embeddings",",headingEmbedding",file.filename)
+      await this.pdfService.replacePDFHeader("ignore1,content,summary,","ignore1,ignore2,content,",file.filename)
+      await this.aiToolsService.getCSVFromChunks(file.filename)
+      await this.pdfService.replacePDFHeader(",embeddings",",summaryEmbedding",file.filename)
+      await this.pdfService.replacePDFHeader("ignore1,ignore2,content,","content,heading,summary,",file.filename)      
+      const csvFilePath = path.join(__dirname, `../../../files/${file.filename}`);
       let data = await this.pdfService.processCSV(csvFilePath)
-      console.log('CSV processed',csvFilePath)
-      console.log('adding data to db',csvFilePath)
+      await unlink(csvFilePath)
       for(let i=0;i<data.length;i++){
-        let document = await this.prisma.document.create({
-            data:{
+        await this.prisma.document.upsert({
+            where: {
+              chunkId: parseInt(data[i].chunkId)
+            },
+            create:{
                 content: data[i].content,
                 heading: data[i].heading,
                 summary: data[i].summary,
-                pdfId,
                 pdfName: csvFilePath,
                 metaData: {
                   startPage: data[i].start_page,
                   endPage: data[i].end_page
                 },
-                chunkId: data[i]?.chunkId ? parseInt(data[i].chunkId): null,
+                chunkId: parseInt(data[i].chunkId),
                 type: data[i].type
-            }
+            },
+            update:{
+              content: data[i].content,
+              heading: data[i].heading,
+              summary: data[i].summary,
+              pdfName: csvFilePath,
+              metaData: {
+                startPage: data[i].start_page,
+                endPage: data[i].end_page
+              },
+              chunkId: parseInt(data[i].chunkId),
+              type: data[i].type
+          }
         })
         await this.prisma.$queryRawUnsafe(
             `UPDATE document 
@@ -125,16 +151,10 @@ export class PDFController {
               "summaryEmbedding" = '[${JSON.parse(data[i].summaryEmbedding)
                 .map((x) => `${x}`)
                 .join(",")}]'
-              WHERE id = ${document.id}`
+              WHERE "chunkId" = ${parseInt(data[i].chunkId)}`
           );
       }
-      console.log('data added to db',csvFilePath)
-      pdfIds.push({
-        id:pdfId,
-        name: csvnames[i]
-      })
-    }
-    return pdfIds;
+      return "Document uploaded successfully."
   }
 
   @Post('create-or-update-employee')

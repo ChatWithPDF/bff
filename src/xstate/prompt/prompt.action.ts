@@ -1,56 +1,8 @@
 import { assign } from 'xstate';
 import {PromptContext} from './prompt.machine'
-import { NO_CONTEXT_ANSWER, REPHRASE_YOUR_QUESTION } from '../../common/constants';
-import { Language } from '../../language';
-import { ConfigService } from '@nestjs/config';
-import { CustomLogger } from '../../common/logger';
-
-const configService = new ConfigService()
-const logger = new CustomLogger('promptService')
+import { NO_CONTEXT_ANSWER } from '../../common/constants';
 
 export const promptActions = {
-
-  updatePromptHistoryWithDetectedLanguage: assign<PromptContext, any>((context, event) => {
-    let ret =  {
-      ...context,
-      prompt: {
-        ...context.prompt,
-        inputLanguage: event.data["language"],
-        inputTextInEnglish: context.prompt.input.body
-      },
-      workflow: [{
-        state: "detectLanguage",
-        timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
-      }]
-    }
-    return ret
-  }),
-
-  updateContextWithTranslatedInput: assign<PromptContext, any>((context, event) => ({
-    ...context,
-    prompt: {
-      ...context.prompt,
-      inputTextInEnglish: event.data["translated"]
-    },
-    workflow: [...context.workflow,{
-      state: "translateInput",
-      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
-    }]
-  })),
-
-  // updateContextWithContactResponse: assign<PromptContext, any>((context, event) => ({
-  //   ...context,
-  //   prompt: {
-  //     ...context.prompt,
-  //     inputTextInEnglish: event.data["translated"],
-  //     outputInEnglish: CONTACT_AMAKRUSHI_HELPLINE('en'),
-  //     output: CONTACT_AMAKRUSHI_HELPLINE(event.data["translated"])
-  //   },
-  //   workflow: [...context.workflow,{
-  //     state: "translateInput",
-  //     timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
-  //   }]
-  // })),
 
   updatePromptWithUserHistory: assign<PromptContext, any>((context, event) => {
     return {
@@ -59,7 +11,7 @@ export const promptActions = {
       ...context.prompt,
       userHistory: event.data?.length ? event.data : [],
     },
-    workflow: [...context.workflow,{
+    workflow: [{
       state: "getUserHistory",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
@@ -70,7 +22,7 @@ export const promptActions = {
     ...context,
     prompt: {
       ...context.prompt,
-      neuralCoreference: context.prompt.inputTextInEnglish
+      neuralCoreference: context.prompt.input.body
     },
     workflow: [...context.workflow,{
       state: "getNeuralCoreference",
@@ -98,7 +50,6 @@ export const promptActions = {
       ...context.prompt,
       similarDocs: event.data,
       oldSimilarDocs: context.prompt.similarDocs,
-      outputInEnglish: event.data ? event.data.content: '',
       responseType: "Response given from highest matching chunk"
     },
     workflow: [...context.workflow,{
@@ -112,7 +63,7 @@ export const promptActions = {
     prompt: {
       ...context.prompt,
       similarQuestion: event.data?.length ? event.data : [],
-      outputInEnglish: event.data?.length ? event.data[0].responseInEnglish: '',
+      output: event.data?.length ? event.data[0].response: '',
       responseType: "Response given from previous similar question with similarity > 0.85"
     },
     workflow: [...context.workflow,{
@@ -139,7 +90,7 @@ export const promptActions = {
     prompt: {
       ...context.prompt,
       responseType: `Response given through GPT without content`,
-      outputInEnglish: NO_CONTEXT_ANSWER
+      output: NO_CONTEXT_ANSWER
     },
     workflow: [...context.workflow,{
       state: "getResponse(without hitting the content DB)",
@@ -152,8 +103,7 @@ export const promptActions = {
     prompt: {
       ...context.prompt,
       responseType: "Response given to bogus question",
-      output: REPHRASE_YOUR_QUESTION(context.prompt.inputLanguage),
-      outputInEnglish: REPHRASE_YOUR_QUESTION(Language.en)
+      output: NO_CONTEXT_ANSWER
     },
     workflow: [...context.workflow,{
       state: "getResponse(bogus question)",
@@ -177,23 +127,11 @@ export const promptActions = {
     ...context,
     prompt: {
       ...context.prompt,
-      outputInEnglish: event.data["response"],
+      output: event.data["response"],
       responseType: `Response given using content`
     },
     workflow: [...context.workflow,{
       state: "getResponse",
-      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
-    }]
-  })),
-
-  updateContextWithTranslatedOutput: assign<PromptContext, any>((context, event) => ({
-    ...context,
-    prompt: {
-      ...context.prompt,
-      output: event.data["translated"]
-    },
-    workflow: [...context.workflow,{
-      state: "translateOutput",
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
   })),

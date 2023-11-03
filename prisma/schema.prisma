@@ -19,8 +19,6 @@ model query {
   responseTime          Int
   query                 String
   response              String
-  queryInEnglish        String
-  responseInEnglish     String
   conversationId        String?   @default(uuid()) @db.Uuid
   userId                String    @db.Uuid
   workflowId            Int?
@@ -31,6 +29,8 @@ model query {
   error                 String?
   errorRate             Int       @default(0)
   responseType          String?
+  mobileNumber           String?
+  userName              String?           
 
   @@unique([userId, createdAt])
   @@unique([userId, createdAt, conversationId])

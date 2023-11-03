@@ -97,18 +97,18 @@ export class PromptHistoryService {
     let promptHistory = await this.prisma.prompt_history.findUnique({
       where:{
         queryInEnglish_pdfId: {
-          queryInEnglish: query.queryInEnglish,
+          queryInEnglish: query.query,
           pdfId: doc.pdfId
         }
       }
     })
     if(promptHistory) return null
-    let embedding = (await this.aiToolsService.getEmbedding(query.queryInEnglish))[0];
+    let embedding = (await this.aiToolsService.getEmbedding(query.query))[0];
     if(embedding){
       promptHistory = await this.prisma.prompt_history.create({
         data:{
-          queryInEnglish: query.queryInEnglish,
-          responseInEnglish: query.responseInEnglish,
+          queryInEnglish: query.query,
+          responseInEnglish: query.response,
           timesUsed: 0,
           responseTime: query.responseTime,
           metadata: {},

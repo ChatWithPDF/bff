@@ -235,9 +235,9 @@ export class AiToolsService {
     }
   }
 
-  async getCSVFromChunks(pdfId: string): Promise<any> {
+  async getCSVFromChunks(fileName: string): Promise<any> {
     var formdata = new FormData();
-    const csvFilePath = path.join(__dirname, `../../../files/${pdfId}.csv`);
+    const csvFilePath = path.join(__dirname, `../../../files/${fileName}`);
     formdata.append('file', fs.createReadStream(csvFilePath), 'data.csv');
     try{
       const response = await axios.post(
