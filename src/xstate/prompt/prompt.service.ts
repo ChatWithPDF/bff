@@ -346,10 +346,10 @@ Answer:
     },
 
     done: async (context) => {
-        // logger.logWithCustomFields({
-        //     userId: context.prompt.input.userId,
-        //     messageId: context.prompt.input.messageId
-        // },'verbose')('done',context)
+        logger.logWithCustomFields({
+            userId: context.prompt.input.userId,
+            messageId: context.prompt.input.messageId
+        },'verbose')('done',context)
         try{
             let query = await prismaService.query.create({
                 data: {
