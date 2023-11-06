@@ -247,8 +247,10 @@ export class AiToolsService {
       });
       await unlink(csvFilePath)
       fs.writeFileSync(csvFilePath, response.data);
+      return response.status
     }catch(error){
       console.log('error', error)
+      return error.response.status
     }
   }
 

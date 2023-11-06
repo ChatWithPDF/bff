@@ -44,21 +44,21 @@ export class EmbeddingsController {
     }
   }
 
-  @Post()
-  async createOrUpdate(
-    @Body() createFeedbackDto: CreateDocumentDto | CreateDocumentDto[]
-  ): Promise<Document[]> {
-    if (!Array.isArray(createFeedbackDto)) {
-      createFeedbackDto = [createFeedbackDto];
-    }
-    return this.embeddingsService.createOrUpdate(createFeedbackDto);
-  }
+  // @Post()
+  // async createOrUpdate(
+  //   @Body() createFeedbackDto: CreateDocumentDto | CreateDocumentDto[]
+  // ): Promise<Document[]> {
+  //   if (!Array.isArray(createFeedbackDto)) {
+  //     createFeedbackDto = [createFeedbackDto];
+  //   }
+  //   return this.embeddingsService.createOrUpdate(createFeedbackDto);
+  // }
 
   @Post("/searchSimilar")
   async findByCriteria(
     @Body() searchQueryDto: SearchQueryDto
   ): Promise<Document[]> {
-    return this.embeddingsService.findByCriteria(searchQueryDto);
+    return this.embeddingsService.findByCriteria2(searchQueryDto);
   }
 
   @Delete(':id')

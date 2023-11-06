@@ -26,7 +26,7 @@ export class EmbeddingsService {
   async findAll(page: number, perPage: number) : Promise<DocumentsResponse>{
     // using raw sql inorder to get embeddings.
     const documents:DocumentWithEmbedding[]  = await this.prisma.$queryRaw`
-      SELECT id, content, tags, CAST(embedding AS TEXT)
+      SELECT id,"chunkId", content, heading, summary, tags, CAST("contentEmbedding" AS TEXT), CAST("headingEmbedding" AS TEXT), CAST("summaryEmbedding" AS TEXT)
       FROM document
       ORDER BY id
       OFFSET ${(page - 1) * perPage} 
@@ -132,10 +132,45 @@ export class EmbeddingsService {
     return results;
   }
 
+  async findByCriteria2(searchQueryDto: SearchQueryDto, searchVia: string = 'summaryEmbedding', type = ""): Promise<any> {
+    const embedding: any = (
+      await this.aiToolsService.getEmbedding(searchQueryDto.query)
+    )[0];
+    let query_embedding = `[${embedding
+      .map((x) => `${x}`)
+      .join(",")}]`
+    let similarity_threshold = searchQueryDto.similarityThreshold
+    let match_count = searchQueryDto.matchCount
+
+    const results = await this.prisma
+    .$queryRawUnsafe(`
+      SELECT
+      document.id as id,
+      document.content AS content,
+      document.heading AS heading,
+      document.summary AS summary,
+      document.tags as tags,
+      1 - (document."${searchVia}" <=> '${query_embedding}') as similarity,
+      document."metaData" as "metaData",
+      document."chunkId" as "chunkId",
+      document.type as type
+      FROM
+        document
+      WHERE 
+        1 - (document."${searchVia}" <=> '${query_embedding}') > ${similarity_threshold}
+        ${type? `AND document.type = '${type}'`:''}
+      ORDER BY
+        document."${searchVia}" <=> '${query_embedding}'
+      LIMIT ${match_count};`
+    );
+
+    return results;
+  }
+
   async findOne(id: number): Promise<DocumentWithEmbedding | null> {
     try {
       const document:DocumentWithEmbedding[]  = await this.prisma.$queryRaw`
-      SELECT id, content, tags, CAST(embedding AS TEXT)
+      SELECT id, content, heading, summary, tags, CAST("contentEmbedding" AS TEXT), CAST("headingEmbedding" AS TEXT), CAST("summaryEmbedding" AS TEXT)
       FROM document where id = ${parseInt(`${id}`)}
     `;
       return document[0];
@@ -156,20 +191,30 @@ export class EmbeddingsService {
   }
 
   async getWithFilters(getDocumentsDto: GetDocumentsDto): Promise<any> {
+    const searchVia = getDocumentsDto.filter.searchVia || 'contentEmbedding'
     const page = getDocumentsDto.pagination.page || 1;
     const perPage = getDocumentsDto.pagination.perPage || 10;
     const embedding: any = (
       await this.aiToolsService.getEmbedding(getDocumentsDto.filter.query)
     )[0];
+    let query_embedding = `[${embedding
+      .map((x) => `${x}`)
+      .join(",")}]`
+    let similarity_threshold = getDocumentsDto.filter.similarityThreshold
+    let match_count = getDocumentsDto.filter.matchCount
     let result = await this.prisma
     .$queryRawUnsafe(`
     WITH matched_docs AS (
-      SELECT id, similarity
-      FROM match_documents(
-        query_embedding := '[${embedding.map((x) => `${x}`).join(",")}]',
-        similarity_threshold := ${getDocumentsDto.filter.similarityThreshold},
-        match_count := ${getDocumentsDto.filter.matchCount}
-      )
+      SELECT
+      document.id as id,
+      1 - (document."${searchVia}" <=> '${query_embedding}') as similarity
+      FROM
+        document
+      WHERE 
+        1 - (document."${searchVia}" <=> '${query_embedding}') > ${similarity_threshold}
+      ORDER BY
+        document."${searchVia}" <=> '${query_embedding}'
+      LIMIT ${match_count}
     ), 
     total_count AS (
       SELECT COUNT(*) AS count
@@ -189,9 +234,14 @@ export class EmbeddingsService {
           json_build_object(
             'id', doc.id,
             'content', doc.content,
+            'heading', doc.heading,
+            'summary', doc.summary,
             'tags', doc.tags,
-            'embedding', CAST(doc.embedding AS TEXT),
-            'similarity', matched_docs.similarity
+            'contentEmbedding', CAST(doc."contentEmbedding" AS TEXT),
+            'headingEmbedding', CAST(doc."headingEmbedding" AS TEXT),
+            'summaryEmbedding', CAST(doc."summaryEmbedding" AS TEXT),
+            'similarity', matched_docs.similarity,
+            'chunkId', doc."chunkId"
           ) ORDER BY matched_docs.similarity DESC
         )
       ) AS result

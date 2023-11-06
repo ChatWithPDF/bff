@@ -26,6 +26,9 @@ export class SearchQueryDto {
     message: "Max matched documents need to be defined to limit search results",
   })
   matchCount: number;
+
+  @IsOptional()
+  searchVia?: string
 }
 
 class Pagination {

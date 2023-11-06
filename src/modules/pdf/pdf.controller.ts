@@ -98,63 +98,118 @@ export class PDFController {
     })
   )
   async addData(@UploadedFile() file: Express.Multer.File){
-      await this.aiToolsService.getCSVFromChunks(file.filename)
+      let startTime = Date.now()
+      const csvFilePath = path.join(__dirname, `../../../files/${file.filename}`);
+      let contentEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+      let timeTakenForContentEmbedding = Date.now() - startTime;
+      if(contentEmbedStatus != 200) {
+        await unlink(csvFilePath)
+        return {
+          contentEmbedStatus,
+          timeTakenForContentEmbedding,
+          message: `Failed with status code ${contentEmbedStatus} while embedding content chunks.`
+        }
+      }
       await this.pdfService.replacePDFHeader(",embeddings",",contentEmbedding",file.filename)
       await this.pdfService.replacePDFHeader("content,heading,","ignore1,content,",file.filename)
-      await this.aiToolsService.getCSVFromChunks(file.filename)
+      let headingEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+      let timeTakenForHeadingEmbedding = Date.now() - startTime;
+      if(headingEmbedStatus != 200){
+        await unlink(csvFilePath)
+        return {
+          contentEmbedStatus,
+          timeTakenForContentEmbedding,
+          headingEmbedStatus,
+          timeTakenForHeadingEmbedding,
+          message: `Failed with status code ${headingEmbedStatus} while embedding heading chunks.`
+        }
+      } 
       await this.pdfService.replacePDFHeader(",embeddings",",headingEmbedding",file.filename)
       await this.pdfService.replacePDFHeader("ignore1,content,summary,","ignore1,ignore2,content,",file.filename)
-      await this.aiToolsService.getCSVFromChunks(file.filename)
+      let summaryEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+      let timeTakenForSummaryEmbedding = Date.now() - startTime;
+      if(summaryEmbedStatus != 200){
+        await unlink(csvFilePath)
+        return {
+          contentEmbedStatus,
+          timeTakenForContentEmbedding,
+          headingEmbedStatus,
+          timeTakenForHeadingEmbedding,
+          summaryEmbedStatus,
+          timeTakenForSummaryEmbedding,
+          message: `Failed with status code ${summaryEmbedStatus} while embedding summary chunks.`
+        }
+      }
       await this.pdfService.replacePDFHeader(",embeddings",",summaryEmbedding",file.filename)
-      await this.pdfService.replacePDFHeader("ignore1,ignore2,content,","content,heading,summary,",file.filename)      
-      const csvFilePath = path.join(__dirname, `../../../files/${file.filename}`);
+      await this.pdfService.replacePDFHeader("ignore1,ignore2,content,","content,heading,summary,",file.filename)
       let data = await this.pdfService.processCSV(csvFilePath)
       await unlink(csvFilePath)
-      for(let i=0;i<data.length;i++){
-        await this.prisma.document.upsert({
-            where: {
-              chunkId: parseInt(data[i].chunkId)
-            },
-            create:{
+      try {
+        for(let i=0;i<data.length;i++){
+          await this.prisma.document.upsert({
+              where: {
+                chunkId: parseInt(data[i].chunkId)
+              },
+              create:{
+                  content: data[i].content,
+                  heading: data[i].heading,
+                  summary: data[i].summary,
+                  pdfName: csvFilePath,
+                  metaData: {
+                    startPage: data[i].startPage,
+                    endPage: data[i].endPage
+                  },
+                  chunkId: parseInt(data[i].chunkId),
+                  type: data[i].type
+              },
+              update:{
                 content: data[i].content,
                 heading: data[i].heading,
                 summary: data[i].summary,
                 pdfName: csvFilePath,
                 metaData: {
-                  startPage: data[i].start_page,
-                  endPage: data[i].end_page
+                  startPage: data[i].startPage,
+                  endPage: data[i].endPage
                 },
                 chunkId: parseInt(data[i].chunkId),
                 type: data[i].type
-            },
-            update:{
-              content: data[i].content,
-              heading: data[i].heading,
-              summary: data[i].summary,
-              pdfName: csvFilePath,
-              metaData: {
-                startPage: data[i].start_page,
-                endPage: data[i].end_page
-              },
-              chunkId: parseInt(data[i].chunkId),
-              type: data[i].type
-          }
-        })
-        await this.prisma.$queryRawUnsafe(
-            `UPDATE document 
-              SET "contentEmbedding" = '[${JSON.parse(data[i].contentEmbedding)
-              .map((x) => `${x}`)
-              .join(",")}]', 
-              "headingEmbedding" = '[${JSON.parse(data[i].headingEmbedding)
+            }
+          })
+          await this.prisma.$queryRawUnsafe(
+              `UPDATE document 
+                SET "contentEmbedding" = '[${JSON.parse(data[i].contentEmbedding)
                 .map((x) => `${x}`)
                 .join(",")}]', 
-              "summaryEmbedding" = '[${JSON.parse(data[i].summaryEmbedding)
-                .map((x) => `${x}`)
-                .join(",")}]'
-              WHERE "chunkId" = ${parseInt(data[i].chunkId)}`
-          );
+                "headingEmbedding" = '[${JSON.parse(data[i].headingEmbedding)
+                  .map((x) => `${x}`)
+                  .join(",")}]', 
+                "summaryEmbedding" = '[${JSON.parse(data[i].summaryEmbedding)
+                  .map((x) => `${x}`)
+                  .join(",")}]'
+                WHERE "chunkId" = ${parseInt(data[i].chunkId)}`
+            );
+        }
+        return {
+          contentEmbedStatus,
+          timeTakenForContentEmbedding,
+          headingEmbedStatus,
+          timeTakenForHeadingEmbedding,
+          summaryEmbedStatus,
+          timeTakenForSummaryEmbedding,
+          message: `Document uploaded successfully.`
+        }
+      } catch (error) {
+        return {
+          contentEmbedStatus,
+          timeTakenForContentEmbedding,
+          headingEmbedStatus,
+          timeTakenForHeadingEmbedding,
+          summaryEmbedStatus,
+          timeTakenForSummaryEmbedding,
+          message: `${error.message}`
+        }
       }
-      return "Document uploaded successfully."
+      
   }
 
   @Post('create-or-update-employee')
