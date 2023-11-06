@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - main
+      - chat-with-pdf
 
 env:
   DOCKER_USERNAME: ${{ github.actor }}
