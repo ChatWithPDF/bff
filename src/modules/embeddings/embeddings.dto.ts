@@ -7,12 +7,28 @@ import {
 
 export class CreateDocumentDto {
   @IsDefined({ message: "Unique ID is required to ingest embeddings" })
-  id: number;
+   chunkId: number;
 
-  @IsDefined({ message: "Tags cannot be empty" })
+  @IsOptional()
   tags: string;
 
+  @IsOptional()
   content: string;
+
+  @IsOptional()
+  heading: string;
+
+  @IsOptional()
+  summary: string;
+
+  @IsOptional()
+  startPage: number;
+
+  @IsOptional()
+  endPage: number;
+
+  @IsOptional()
+  type: string;
 }
 
 export class SearchQueryDto {
@@ -29,6 +45,9 @@ export class SearchQueryDto {
 
   @IsOptional()
   searchVia?: string
+
+  @IsOptional()
+  chunkId?: number
 }
 
 class Pagination {

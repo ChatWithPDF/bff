@@ -13,6 +13,16 @@ export class EmbeddingsController {
     @Body() getDocumentsDto: GetDocumentsDto
   ): Promise<DocumentsResponse> {
     try {
+      if(getDocumentsDto.filter.chunkId){
+        const document = await this.embeddingsService.findOneByChunkId(getDocumentsDto.filter.chunkId);
+        return {
+          documents: [document],
+          pagination: {
+            page: 1,
+            totalPages: 1
+          }
+        }
+      }
       if(
         getDocumentsDto.filter &&
         getDocumentsDto.filter.query &&
@@ -44,15 +54,15 @@ export class EmbeddingsController {
     }
   }
 
-  // @Post()
-  // async createOrUpdate(
-  //   @Body() createFeedbackDto: CreateDocumentDto | CreateDocumentDto[]
-  // ): Promise<Document[]> {
-  //   if (!Array.isArray(createFeedbackDto)) {
-  //     createFeedbackDto = [createFeedbackDto];
-  //   }
-  //   return this.embeddingsService.createOrUpdate(createFeedbackDto);
-  // }
+  @Post()
+  async createOrUpdate(
+    @Body() createFeedbackDto: CreateDocumentDto | CreateDocumentDto[]
+  ): Promise<Document[]> {
+    if (!Array.isArray(createFeedbackDto)) {
+      createFeedbackDto = [createFeedbackDto];
+    }
+    return this.embeddingsService.createOrUpdate(createFeedbackDto);
+  }
 
   @Post("/searchSimilar")
   async findByCriteria(

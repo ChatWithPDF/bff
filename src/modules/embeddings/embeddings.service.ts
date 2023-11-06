@@ -42,52 +42,113 @@ export class EmbeddingsService {
     const response: Document[] = [];
     if (Array.isArray(allData)) {
       for (const data of allData) {
+        data.chunkId = parseInt(`${data.chunkId}`)
         let olderDocument;
         let document: Document;
         try {
           olderDocument = await this.prisma.document.findUnique({
             where: {
-              id: data.id,
+              chunkId: data.chunkId,
             },
           });
           if (olderDocument) {
-            this.promptHistoryService.softDeleteRelatedToDocument(data.id)
-            if (olderDocument.tags == data.tags) {
+
+            this.promptHistoryService.softDeleteRelatedToDocument(olderDocument.id)
+
+            if (data.content && (olderDocument.content != data.content)) {
               olderDocument.content = data.content;
               document = await this.prisma.document.update({
-                where: { id: data.id },
+                where: { chunkId: data.chunkId },
                 data: { content: data.content },
               });
-            } else {
-              // get new embeddings for newer tags
-              // get new embeddings for newer tags if they have changed
-              let embedding = (await this.aiToolsService.getEmbedding(data.tags))[0];
-              document = await this.prisma.document.update({
-                where: { id: data.id },
-                data: {
-                  tags: data.tags,
-                  content: data.content,
-                },
-              });
+              let embedding = (await this.aiToolsService.getEmbedding(data.content,"retrieval"))[0];
               await this.prisma.$queryRawUnsafe(
-                `UPDATE document SET embedding = '[${embedding
+                `UPDATE document SET "contentEmbedding" = '[${embedding
                   .map((x) => `${x}`)
-                  .join(",")}]' WHERE id = ${document.id}`
+                  .join(",")}]' WHERE "chunkId" = ${data.chunkId}`
               );
             }
+
+            if (data.heading && (olderDocument.heading != data.heading)) {
+              olderDocument.heading = data.heading;
+              document = await this.prisma.document.update({
+                where: { chunkId: data.chunkId },
+                data: { heading: data.heading },
+              });
+              let embedding = (await this.aiToolsService.getEmbedding(data.heading,"retrieval"))[0];
+              await this.prisma.$queryRawUnsafe(
+                `UPDATE document SET "headingEmbedding" = '[${embedding
+                  .map((x) => `${x}`)
+                  .join(",")}]' WHERE "chunkId" = ${data.chunkId}`
+              );
+            }
+
+            if (data.summary && (olderDocument.summary != data.summary)) {
+              olderDocument.summary = data.summary;
+              document = await this.prisma.document.update({
+                where: { chunkId: data.chunkId },
+                data: { summary: data.summary },
+              });
+              let embedding = (await this.aiToolsService.getEmbedding(data.summary,"retrieval"))[0];
+              await this.prisma.$queryRawUnsafe(
+                `UPDATE document SET "summaryEmbedding" = '[${embedding
+                  .map((x) => `${x}`)
+                  .join(",")}]' WHERE "chunkId" = ${data.chunkId}`
+              );
+            }
+
+            if(data.startPage) {
+              document = await this.prisma.document.update({
+                where: { chunkId: data.chunkId },
+                data: { metaData: {
+                  startPage: data.startPage,
+                  endPage: document.metaData['endPage']
+                }},
+              });
+            }
+
+            if(data.endPage) {
+              document = await this.prisma.document.update({
+                where: { chunkId: data.chunkId },
+                data: { metaData: {
+                  startPage: document.metaData['startPage'],
+                  endPage: data.endPage
+                }},
+              });
+            }
+
+            if(data.type) {
+              document = await this.prisma.document.update({
+                where: { chunkId: data.chunkId },
+                data: { type: data.type },
+              });
+            }
+
           } else {
-            let embedding = (await this.aiToolsService.getEmbedding(data.tags))[0];
+            if(!data.summary || !data.heading || !data.content ) throw new Error("Invalid request body.")
+            let contentEmbedding = (await this.aiToolsService.getEmbedding(data.content,"retrieval"))[0];
+            let headingEmbedding = (await this.aiToolsService.getEmbedding(data.heading,"retrieval"))[0];
+            let summaryEmbedding = (await this.aiToolsService.getEmbedding(data.summary,"retrieval"))[0];
             document = await this.prisma.document.create({
               data: {
-                id: data.id,
+                chunkId: data.chunkId,
                 tags: data.tags,
                 content: data.content,
+                heading: data.heading,
+                summary: data.summary,
+                metaData: {
+                  startPage: data.startPage,
+                  endPage: data.endPage
+                },
+                type: data.type
               },
             });
             await this.prisma.$queryRawUnsafe(
-              `UPDATE document SET embedding = '[${embedding
-                .map((x) => `${x}`)
-                .join(",")}]' WHERE id = ${document.id}`
+              `UPDATE document SET 
+                "contentEmbedding" = '[${contentEmbedding.map((x) => `${x}`).join(",")}]',
+                "headingEmbedding" = '[${headingEmbedding.map((x) => `${x}`).join(",")}]',
+                "summaryEmbedding" = '[${summaryEmbedding.map((x) => `${x}`).join(",")}]'
+                WHERE "chunkId" = ${data.chunkId}`
             );
           }
           response.push(document);
@@ -170,8 +231,20 @@ export class EmbeddingsService {
   async findOne(id: number): Promise<DocumentWithEmbedding | null> {
     try {
       const document:DocumentWithEmbedding[]  = await this.prisma.$queryRaw`
-      SELECT id, content, heading, summary, tags, CAST("contentEmbedding" AS TEXT), CAST("headingEmbedding" AS TEXT), CAST("summaryEmbedding" AS TEXT)
+      SELECT "chunkId", id, content, heading, summary, tags, CAST("contentEmbedding" AS TEXT), CAST("headingEmbedding" AS TEXT), CAST("summaryEmbedding" AS TEXT)
       FROM document where id = ${parseInt(`${id}`)}
+    `;
+      return document[0];
+    } catch {
+      return null;
+    }
+  }
+
+  async findOneByChunkId(id: number): Promise<DocumentWithEmbedding | null> {
+    try {
+      const document:DocumentWithEmbedding[]  = await this.prisma.$queryRaw`
+      SELECT "chunkId", id, content, heading, summary, tags, CAST("contentEmbedding" AS TEXT), CAST("headingEmbedding" AS TEXT), CAST("summaryEmbedding" AS TEXT)
+      FROM document where "chunkId" = ${parseInt(`${id}`)}
     `;
       return document[0];
     } catch {

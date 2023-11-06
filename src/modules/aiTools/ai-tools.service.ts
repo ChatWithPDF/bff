@@ -177,16 +177,16 @@ export class AiToolsService {
     }
   }
 
-  async getEmbedding(query: string): Promise<any> {
+  async getEmbedding(query: string, type: string = ""): Promise<any> {
     var myHeaders = new Headers();
     myHeaders.append("Content-Type", "application/json");
     myHeaders.append(
       "Authorization",
       this.configService.get("AI_TOOLS_AUTH_HEADER")
     );
-
     var raw = JSON.stringify({
-      query
+      query,
+      query_type: type
     });
 
     var requestOptions: RequestInit = {
