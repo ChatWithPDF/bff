@@ -198,7 +198,7 @@ export class AiToolsService {
     let embeddings;
     try {
       embeddings = await fetch(
-        `${this.configService.get("AI_TOOLS_BASE_URL")}/embeddings/instructor/local/`,
+        `${this.configService.get("AI_TOOLS_BASE_URL")}/embeddings/openai/remote/`,
         requestOptions
       )
       embeddings = await embeddings.json()
@@ -241,7 +241,7 @@ export class AiToolsService {
     formdata.append('file', fs.createReadStream(csvFilePath), 'data.csv');
     try{
       const response = await axios.post(
-        `${this.configService.get("AI_TOOLS_BASE_URL")}/embeddings/instructor/local/`,
+        `${this.configService.get("AI_TOOLS_BASE_URL")}/embeddings/openai/remote/`,
         formdata, {
         headers: formdata.getHeaders(),
       });
