@@ -157,7 +157,7 @@ export const promptServices = {
             let hitsSummary: any = context.prompt.similarDocs.summaryDocs
 
             let caseMatched = 0;
-            const relevantCorpus = [];
+            let relevantCorpus = [];
 
             // Case 3 => Very High Heading Match Single. Reproduce the content as is (Expected)
             if (
@@ -255,14 +255,23 @@ export const promptServices = {
                 }
             } else {
                 if (relevantCorpus.length === 0) {
-                return {
-                    topMatchedChunks: [],
-                    matchType: 0
+                    return {
+                        topMatchedChunks: [],
+                        matchType: 0
+                    }
                 }
+                if(relevantCorpus.length<2){
+                    for(const data of hitsContent){
+                        if(relevantCorpus.indexOf(data.id) == -1){
+                            relevantCorpus.push(data.id)
+                            if(relevantCorpus.length>2) break
+                        }
+                    }
                 }
+                relevantCorpus = relevantCorpus.slice(0,5)
                 if (caseMatched === 3) {
                     return {
-                        topMatchedChunks: filterUnique([relevantCorpus[0]],[...hitsContent, ...hitsHeading, ...hitsSummary]),
+                        topMatchedChunks:filterUnique([relevantCorpus[0],relevantCorpus[1],relevantCorpus[3]],[...hitsContent, ...hitsHeading, ...hitsSummary]),
                         matchType: 1
                     }
                 } else {
@@ -310,6 +319,9 @@ Answer:
             } else{
                 prompt = generalPrompt(context.prompt.userHistory,expertContext,userQuestion, context.prompt.neuralCoreference, context.prompt.employeeData)
             }
+            console.log(context.prompt.input.messageId,JSON.stringify({
+                prompt: prompt,
+            }))
             let { response: finalResponse, allContent: ac, error } = await aiToolsService.llm(prompt);
             finalResponse = finalResponse.replace("AI: ",'')
                                          .replace('B sased on the context provided ','')
