@@ -7,7 +7,7 @@ import { Language } from "../../language";
 import { CustomLogger } from "../../common/logger";
 import { generalPrompt, restructureContentPrompt } from "../../common/constants";
 import { flagsmith } from "../../common/flagsmith";
-import { filterUnique } from "./prompt.utils";
+import { filterUnique, uniqueUnion } from "./prompt.utils";
 const fetch = require('node-fetch'); 
 const { Headers } = fetch;
 
@@ -237,6 +237,10 @@ export const promptServices = {
                 }
                 if (intersectionSet.size === 0) {
                     intersectionSet = new Set([...C].filter((x) => A.includes(x)));
+                }
+                if(intersectionSet.size === 1){
+                    for(const data of hitsContent)
+                    relevantCorpus.push(data.id)
                 }
                 if (intersectionSet.size > 0) {
                     caseMatched = 4;
