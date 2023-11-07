@@ -317,6 +317,11 @@ Answer:
                                          .replace('Based on the provided context, ','')
                                          .replace('Based on the provided context ','')
                                          .replace(/HR/g,'OD')
+                                         .replace('Answer -',"")
+                                         .replace('Answer-',"")
+                                         .replace('Answer:',"")
+                                         .replace('Answer :',"")
+                                         .replace('Answer',"")
             return { response: finalResponse, allContent: ac, error }
         } catch(error){
             console.log(error)
