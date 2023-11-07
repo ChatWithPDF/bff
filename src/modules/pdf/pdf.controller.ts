@@ -97,51 +97,54 @@ export class PDFController {
       fileFilter: csvFileFilter,
     })
   )
-  async addData(@UploadedFile() file: Express.Multer.File){
-      let startTime = Date.now()
+  async addData(@UploadedFile() file: Express.Multer.File, @Body() body: any){ 
       const csvFilePath = path.join(__dirname, `../../../files/${file.filename}`);
-      let contentEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
-      let timeTakenForContentEmbedding = Date.now() - startTime;
-      if(contentEmbedStatus != 200) {
-        await unlink(csvFilePath)
-        return {
-          contentEmbedStatus,
-          timeTakenForContentEmbedding,
-          message: `Failed with status code ${contentEmbedStatus} while embedding content chunks.`
+      let contentEmbedStatus, headingEmbedStatus, summaryEmbedStatus, timeTakenForContentEmbedding, timeTakenForHeadingEmbedding, timeTakenForSummaryEmbedding;
+      if(body.generateEmbeddings){
+        let startTime = Date.now()
+        contentEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+        timeTakenForContentEmbedding = Date.now() - startTime;
+        if(contentEmbedStatus != 200) {
+          await unlink(csvFilePath)
+          return {
+            contentEmbedStatus,
+            timeTakenForContentEmbedding,
+            message: `Failed with status code ${contentEmbedStatus} while embedding content chunks.`
+          }
         }
+        await this.pdfService.replacePDFHeader(",embeddings",",contentEmbedding",file.filename)
+        await this.pdfService.replacePDFHeader("content,heading,","ignore1,content,",file.filename)
+        headingEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+        timeTakenForHeadingEmbedding = Date.now() - startTime;
+        if(headingEmbedStatus != 200){
+          await unlink(csvFilePath)
+          return {
+            contentEmbedStatus,
+            timeTakenForContentEmbedding,
+            headingEmbedStatus,
+            timeTakenForHeadingEmbedding,
+            message: `Failed with status code ${headingEmbedStatus} while embedding heading chunks.`
+          }
+        } 
+        await this.pdfService.replacePDFHeader(",embeddings",",headingEmbedding",file.filename)
+        await this.pdfService.replacePDFHeader("ignore1,content,summary,","ignore1,ignore2,content,",file.filename)
+        summaryEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
+        timeTakenForSummaryEmbedding = Date.now() - startTime;
+        if(summaryEmbedStatus != 200){
+          await unlink(csvFilePath)
+          return {
+            contentEmbedStatus,
+            timeTakenForContentEmbedding,
+            headingEmbedStatus,
+            timeTakenForHeadingEmbedding,
+            summaryEmbedStatus,
+            timeTakenForSummaryEmbedding,
+            message: `Failed with status code ${summaryEmbedStatus} while embedding summary chunks.`
+          }
+        }
+        await this.pdfService.replacePDFHeader(",embeddings",",summaryEmbedding",file.filename)
+        await this.pdfService.replacePDFHeader("ignore1,ignore2,content,","content,heading,summary,",file.filename)
       }
-      await this.pdfService.replacePDFHeader(",embeddings",",contentEmbedding",file.filename)
-      await this.pdfService.replacePDFHeader("content,heading,","ignore1,content,",file.filename)
-      let headingEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
-      let timeTakenForHeadingEmbedding = Date.now() - startTime;
-      if(headingEmbedStatus != 200){
-        await unlink(csvFilePath)
-        return {
-          contentEmbedStatus,
-          timeTakenForContentEmbedding,
-          headingEmbedStatus,
-          timeTakenForHeadingEmbedding,
-          message: `Failed with status code ${headingEmbedStatus} while embedding heading chunks.`
-        }
-      } 
-      await this.pdfService.replacePDFHeader(",embeddings",",headingEmbedding",file.filename)
-      await this.pdfService.replacePDFHeader("ignore1,content,summary,","ignore1,ignore2,content,",file.filename)
-      let summaryEmbedStatus = await this.aiToolsService.getCSVFromChunks(file.filename)
-      let timeTakenForSummaryEmbedding = Date.now() - startTime;
-      if(summaryEmbedStatus != 200){
-        await unlink(csvFilePath)
-        return {
-          contentEmbedStatus,
-          timeTakenForContentEmbedding,
-          headingEmbedStatus,
-          timeTakenForHeadingEmbedding,
-          summaryEmbedStatus,
-          timeTakenForSummaryEmbedding,
-          message: `Failed with status code ${summaryEmbedStatus} while embedding summary chunks.`
-        }
-      }
-      await this.pdfService.replacePDFHeader(",embeddings",",summaryEmbedding",file.filename)
-      await this.pdfService.replacePDFHeader("ignore1,ignore2,content,","content,heading,summary,",file.filename)
       let data = await this.pdfService.processCSV(csvFilePath)
       await unlink(csvFilePath)
       try {
