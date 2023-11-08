@@ -47,10 +47,9 @@ Follow the instructions while answering :
 2. If no part of the content is relevant/useful to the answer do not use the content, just provide an answer that that relevant content is not available.
 3. Ensure you go through them all the content, reorganise them and then answer the query step by step.
 4. Structure the answers in bullet points and sections and provide any mentioned hyperlinks and links to forms
-5.  If the questions is about holidays, then just show the holiday calendar given in the corpus and do not provide any additional details 
-6. No matter what, do not output false content
+5. No matter what, do not output false content
 
-
+s
 Format of the Query and Answer
 Query: {question}
 Answer: {answer}
