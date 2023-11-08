@@ -132,7 +132,6 @@ export class PromptHistoryService {
     const queryEmbedding = `'[${embedding
                     .map((x) => `${x}`)
                     .join(",")}]'`
-    const pdfs = `ARRAY[${searchQueryDto.pdfIds.map((x)=>`'${x}'`).join(",")}]`
     const results = await this.prisma
       .$queryRawUnsafe(`
         SELECT
@@ -145,7 +144,6 @@ export class PromptHistoryService {
         WHERE
           prompt_history."deletedAt" IS NULL  -- Added this condition to filter out deleted records
           AND 1 - (prompt_history.embedding <=> ${queryEmbedding}) > ${searchQueryDto.similarityThreshold}
-          AND prompt_history."pdfId"::text = ANY(${pdfs})
         ORDER BY
           prompt_history.embedding <=> ${queryEmbedding}
         LIMIT ${searchQueryDto.matchCount};
