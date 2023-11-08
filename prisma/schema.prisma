@@ -75,10 +75,9 @@ model prompt_history {
   timesUsed         Int
   metadata          Json?
   embedding         Unsupported("vector")?
-  pdfId             String?                @db.Uuid
   queryId           String?                @db.Uuid
 
-  @@unique([queryInEnglish,pdfId])
+  @@unique([queryInEnglish])
 }
 
 model config {

@@ -76,52 +76,52 @@ export class PromptHistoryService {
   // }
 
   async create(queryId): Promise<PromptHistory> {
-    let query = await this.prisma.query.findFirst({
-      where: {
-        id: queryId
-      }
-    })
-    if(!query) return null
-    let similarDocs = await this.prisma.similarity_search_response.findFirst({
-      where: {
-        queryId: queryId
-      }
-    })
-    if(!similarDocs) return null
-    let doc = await this.prisma.document.findFirst({
-      where: {
-        id: similarDocs.documentId
-      }
-    })
-    if(!doc) return null
-    let promptHistory = await this.prisma.prompt_history.findUnique({
-      where:{
-        queryInEnglish_pdfId: {
-          queryInEnglish: query.query,
-          pdfId: doc.pdfId
-        }
-      }
-    })
-    if(promptHistory) return null
-    let embedding = (await this.aiToolsService.getEmbedding(query.query))[0];
-    if(embedding){
-      promptHistory = await this.prisma.prompt_history.create({
-        data:{
-          queryInEnglish: query.query,
-          responseInEnglish: query.response,
-          timesUsed: 0,
-          responseTime: query.responseTime,
-          metadata: {},
-          queryId: query.id,
-          pdfId: doc.pdfId
+    try{
+      let query = await this.prisma.query.findFirst({
+        where: {
+          id: queryId
         }
       })
-      await this.prisma.$queryRawUnsafe(
-        `UPDATE prompt_history SET embedding = '[${embedding
-          .map((x) => `${x}`)
-          .join(",")}]' WHERE id = ${promptHistory.id}`
-      );
-      return promptHistory
+      if(!query) return null
+      let similarDocs = await this.prisma.similarity_search_response.findFirst({
+        where: {
+          queryId: queryId
+        }
+      })
+      if(!similarDocs) return null
+      let doc = await this.prisma.document.findFirst({
+        where: {
+          id: similarDocs.documentId
+        }
+      })
+      if(!doc) return null
+      let promptHistory = await this.prisma.prompt_history.findUnique({
+        where:{
+            queryInEnglish: query.query
+        }
+      })
+      if(promptHistory) return null
+      let embedding = (await this.aiToolsService.getEmbedding(query.query))[0];
+      if(embedding){
+        promptHistory = await this.prisma.prompt_history.create({
+          data:{
+            queryInEnglish: query.query,
+            responseInEnglish: query.response,
+            timesUsed: 0,
+            responseTime: query.responseTime,
+            metadata: {},
+            queryId: query.id
+          }
+        })
+        await this.prisma.$queryRawUnsafe(
+          `UPDATE prompt_history SET embedding = '[${embedding
+            .map((x) => `${x}`)
+            .join(",")}]' WHERE id = ${promptHistory.id}`
+        );
+        return promptHistory
+      } 
+    } catch (error){
+      console.log(error)
     }
   }
 
