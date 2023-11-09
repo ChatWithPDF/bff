@@ -13,6 +13,7 @@ import { AiToolsService } from "./modules/aiTools/ai-tools.service";
 import { PDFModule } from "./modules/pdf/pdf.module";
 import { AiToolsModule } from "./modules/aiTools/ai-tools.module";
 import { FeedbackModule } from "./modules/feedback/feedback.module";
+import { PromptHistoryModule } from "./modules/prompt-history/prompt-history.module";
 
 @Module({
   imports: [
@@ -21,7 +22,8 @@ import { FeedbackModule } from "./modules/feedback/feedback.module";
     UserModule,
     PDFModule,
     AiToolsModule,
-    FeedbackModule
+    FeedbackModule,
+    PromptHistoryModule
   ],
   controllers: [AppController],
   providers: [
