@@ -68,6 +68,20 @@ export const promptActions = {
     },
     workflow: [...context.workflow,{
       state: "getSimlilarQuestion",
+      similarQuestion: event.data,
+      timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
+    }]
+  })),
+
+  updateContextWithSimilarQuestionNotFound: assign<PromptContext, any>((context, event) => ({
+    ...context,
+    prompt: {
+      ...context.prompt,
+      similarQuestion: event.data
+    },
+    workflow: [...context.workflow,{
+      state: "getSimlilarQuestion",
+      similarQuestion: event.data,
       timeTaken: `${(Date.now() - context.currentStateStartTime)/1000} sec`
     }]
   })),

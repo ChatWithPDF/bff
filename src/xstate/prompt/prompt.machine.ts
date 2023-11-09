@@ -111,7 +111,7 @@ export const promptMachine = createMachine<PromptContext>({
             },
             {
               target: 'getSimilarDocs',
-              actions: []
+              actions: ["updateContextWithSimilarQuestionNotFound"]
             }
           ],
           onError: 'handleError',
