@@ -59,16 +59,16 @@ export const promptServices = {
     },
 
     findSimilarQuestion: async (context) => {
-        let pdfIds = context.prompt.input.pdfId ? 
-                        [context.prompt.input.pdfId] : 
-                        context.prompt.input.pdfIds && context.prompt.input.pdfIds.length ?
-                        context.prompt.input.pdfIds :
-                        JSON.parse(configService.get('DEFAULT_PDFS'))
+        const flags = await flagsmith.getIdentityFlags(context.prompt.input.userId);
+
+        let similarityThreshold = flags.getFeatureValue('cache_threshold');
+        if(similarityThreshold) similarityThreshold = parseFloat(similarityThreshold)
+        else similarityThreshold = 0.95
+
         const olderSimilarQuestion =
         await promptHistoryService.findByCriteria({
-            query: context.prompt.neuralCoreference,
-            pdfIds,
-            similarityThreshold: 0.97,
+            query: context.prompt.input.body,
+            similarityThreshold,
             matchCount: 1,
         });
         return olderSimilarQuestion

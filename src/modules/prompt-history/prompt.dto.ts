@@ -33,11 +33,6 @@ export class SearchPromptHistoryDto {
   @IsDefined({ message: "Query needs to be defined to search documents" })
   query: string;
 
-  @IsDefined({
-    message: "Unique Identifier for PDF",
-  })
-  pdfIds: Array<string>;
-
   @IsDefined({ message: "Similarity Threashold needs to be defined" })
   similarityThreshold: number;
 
