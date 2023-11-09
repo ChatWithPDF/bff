@@ -212,7 +212,6 @@ export class PDFController {
           message: `${error.message}`
         }
       }
-      
   }
 
   @Post('create-or-update-employee')
@@ -255,4 +254,56 @@ export class PDFController {
     }
     return "Error Occurred, Unable to add employee data";
   }
+
+  @Post('addSimilarQuestions')
+  @UseInterceptors(
+    FastifyFileInterceptor('file', {
+      storage: diskStorage({
+        destination: './files',
+        filename: editFileName,
+      }),
+      fileFilter: csvFileFilter,
+    })
+  )
+  async addSimilarQuestions(@UploadedFile() file: Express.Multer.File, @Body() body: any){ 
+    const csvFilePath = path.join(__dirname, `../../../files/${file.filename}`);
+    let data = await this.pdfService.processCSV(csvFilePath)
+    await unlink(csvFilePath)
+    try {
+      for(let i=0;i<data.length;i++){
+        let embedding = (await this.aiToolsService.getEmbedding(data[i].queryInEnglish))[0];
+        let prompt = await this.prisma.prompt_history.upsert({
+            where: {
+              queryInEnglish: data[i].queryInEnglish
+            },
+            create:{
+              responseTime: 0,
+              queryInEnglish: data[i].queryInEnglish,
+              responseInEnglish: data[i].responseInEnglish,
+              timesUsed: 0
+            },
+            update:{
+              responseTime: 0,
+              queryInEnglish: data[i].queryInEnglish,
+              responseInEnglish: data[i].responseInEnglish,
+              timesUsed: 0
+          }
+        })
+        await this.prisma.$queryRawUnsafe(
+            `UPDATE prompt_history 
+              SET "embedding" = '[${embedding
+              .map((x) => `${x}`)
+              .join(",")}]'
+              WHERE "id" = ${prompt.id}`
+          );
+      }
+      return {
+        message: `Questions uploaded successfully.`
+      }
+    } catch (error) {
+      return {
+        message: `${error.message}`
+      }
+    }
+}
 }
