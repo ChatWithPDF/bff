@@ -7,6 +7,7 @@ import {
   IsDefined,
   ValidateIf,
   IsUUID,
+  IsOptional,
 } from "class-validator";
 
 export class CreatePromptDto {
@@ -30,6 +31,9 @@ export class CreatePromptDto {
 }
 
 export class SearchPromptHistoryDto {
+  @IsOptional()
+  exactQuery?: string;
+
   @IsDefined({ message: "Query needs to be defined to search documents" })
   query: string;
 
@@ -40,4 +44,42 @@ export class SearchPromptHistoryDto {
     message: "Max matched documents need to be difined to limit search results",
   })
   matchCount: number;
+}
+
+class Pagination {
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  page?: number;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  perPage?: number;
+}
+
+export class GetPromptHistoryDto {
+  @IsOptional()
+  pagination?: Pagination
+
+  @IsOptional()
+  filter?: SearchPromptHistoryDto
+}
+
+export class PromptHistory {
+  createdAt: String;   
+  updatedAt: String; 
+  id: Number;
+  queryId:String;        
+  responseTime: Number;
+  queryInEnglish: String;
+  responseInEnglish: String;
+}
+
+export interface PromptHistoryResponse {
+    history: PromptHistory[];
+    pagination: {
+      page: number;
+      totalPages: number;
+    }
 }

@@ -1,11 +1,11 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
 import {
   document as Document,
-  prompt_history as PromptHistory,
+  prompt_history as Prompt_History,
 } from "@prisma/client";
 import { PrismaService } from "../../global-services/prisma.service";
 import { ConfigService } from "@nestjs/config";
-import { CreatePromptDto, SearchPromptHistoryDto } from "./prompt.dto";
+import { CreatePromptDto, GetPromptHistoryDto, SearchPromptHistoryDto, PromptHistory, PromptHistoryResponse } from "./prompt.dto";
 import { CustomLogger } from "../../common/logger";
 import { AiToolsService } from "../aiTools/ai-tools.service";
 
@@ -75,7 +75,7 @@ export class PromptHistoryService {
   //   return document;
   // }
 
-  async create(queryId): Promise<PromptHistory> {
+  async create(queryId): Promise<Prompt_History> {
     try{
       let query = await this.prisma.query.findFirst({
         where: {
@@ -162,6 +162,18 @@ export class PromptHistoryService {
     }
   }
 
+  async findOneByExactQuery(query: string): Promise<PromptHistory | null> {
+    try {
+      const history: PromptHistory[]  = await this.prisma.$queryRaw`
+      SELECT "createdAt", "updatedAt", id, "queryId", "responseTime", "queryInEnglish", "responseInEnglish"
+      FROM prompt_history where "queryInEnglish" = ${query}
+    `;
+      return history[0];
+    } catch {
+      return null;
+    }
+  }
+
   async softDeleteRelatedToDocument(documentId) {
     const affectedPromptHistories = await this.prisma.similarity_search_response.findMany({
       where: {
@@ -185,5 +197,91 @@ export class PromptHistoryService {
       ),
     );
     return updated
+  }
+
+  async getWithFilters(getDocumentsDto: GetPromptHistoryDto): Promise<any> {
+    const page = getDocumentsDto.pagination.page || 1;
+    const perPage = getDocumentsDto.pagination.perPage || 10;
+    const embedding: any = (
+      await this.aiToolsService.getEmbedding(getDocumentsDto.filter.query)
+    )[0];
+    let query_embedding = `[${embedding
+      .map((x) => `${x}`)
+      .join(",")}]`
+    let similarity_threshold = getDocumentsDto.filter.similarityThreshold
+    let match_count = getDocumentsDto.filter.matchCount
+    let result = await this.prisma
+    .$queryRawUnsafe(`
+    WITH matched_docs AS (
+      SELECT
+      prompt_history.id as id,
+      1 - (prompt_history.embedding <=> '${query_embedding}') as similarity
+      FROM
+        prompt_history
+      WHERE 
+        1 - (prompt_history.embedding <=> '${query_embedding}') > ${similarity_threshold}
+      ORDER BY
+        prompt_history.embedding <=> '${query_embedding}'
+      LIMIT ${match_count}
+    ), 
+    total_count AS (
+      SELECT COUNT(*) AS count
+      FROM matched_docs
+    )
+    SELECT
+      json_build_object(
+        'pagination',
+        json_build_object(
+          'page', $1,
+          'perPage', $2,
+          'totalPages', CEIL(total_count.count::numeric / $2),
+          'totalDocuments', total_count.count
+        ),
+        'documents',
+        json_agg(
+          json_build_object(
+            'createdAt', doc."createdAt",
+            'updatedAt', doc."updatedAt",
+            'id', doc.id,
+            'queryId', doc."queryId",
+            'responseTime', doc."responseTime",
+            'queryInEnglish', doc."queryInEnglish",
+            'responseInEnglish', doc."responseInEnglish"
+          ) ORDER BY matched_docs.similarity DESC
+        )
+      ) AS result
+    FROM
+      matched_docs
+      JOIN document AS doc ON matched_docs.id = doc.id
+      CROSS JOIN total_count
+    GROUP BY total_count.count, $1, $2
+    OFFSET (($1 - 1) * $2)
+    LIMIT $2;
+    
+    `,page,perPage);
+    return result[0]?.result || {
+      pagination: {
+        page: 1,
+        perPage: 10,
+        totalPages: 0,
+        totalDocument: 0
+      },
+      documents: []
+    };
+  }
+
+  async findAll(page: number, perPage: number) : Promise<PromptHistoryResponse>{
+    // using raw sql inorder to get embeddings.
+    const history:PromptHistory[]  = await this.prisma.$queryRaw`
+      SELECT "createdAt", "updatedAt", id, "queryId", "responseTime", "queryInEnglish", "responseInEnglish"
+      FROM prompt_history
+      ORDER BY id
+      OFFSET ${(page - 1) * perPage} 
+      LIMIT ${perPage}
+    `;
+    const totalDocuments = await this.prisma.document.count();
+    const totalPages = Math.ceil(totalDocuments / perPage);
+    const pagination = { page, perPage, totalPages, totalDocuments };
+    return { pagination, history };
   }
 }
