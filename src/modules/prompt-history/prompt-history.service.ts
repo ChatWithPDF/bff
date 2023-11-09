@@ -142,8 +142,7 @@ export class PromptHistoryService {
         FROM
           prompt_history
         WHERE
-          prompt_history."deletedAt" IS NULL  -- Added this condition to filter out deleted records
-          AND 1 - (prompt_history.embedding <=> ${queryEmbedding}) > ${searchQueryDto.similarityThreshold}
+          1 - (prompt_history.embedding <=> ${queryEmbedding}) > ${searchQueryDto.similarityThreshold}
         ORDER BY
           prompt_history.embedding <=> ${queryEmbedding}
         LIMIT ${searchQueryDto.matchCount};
