@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, HttpException, HttpStatus, Param, Post, Put, Query, Request, UseGuards } from '@nestjs/common';
 import { UserService } from './user.service';
 import { query } from '@prisma/client';
 import { ConfigService } from '@nestjs/config';
@@ -80,11 +80,7 @@ export class UserController {
   async sendOTP(@Query('phone') phone: string, ){
     let employee = await this.userService.getEmployee(phone)
     if(!employee) {
-      return {
-        "statusCode": 403,
-        "message": "Forbidden resource",
-        "error": "Forbidden"
-      }
+      throw new HttpException('Forbidden', HttpStatus.FORBIDDEN);
     }
     try{
       var myHeaders = new Headers();
