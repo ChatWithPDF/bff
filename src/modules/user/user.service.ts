@@ -123,4 +123,79 @@ export class UserService {
       ]);
     }
   }
+
+  async getEmployee(phone: string) {
+    let employee = await this.prisma.employee.findFirst({
+      where: {
+        mobileNumber: phone
+      }
+    })
+    return employee
+  }
+
+  async getAllEmployees(
+    page: number = 1,
+    pageSize: number = 10,
+    mobileNumber?: string,
+    name?: string,
+  ) {
+    const where = {};
+
+    if (mobileNumber) {
+      Object.assign(where, { mobileNumber });
+    }
+
+    if (name) {
+      Object.assign(where, {
+        OR: [
+          { firstName: { contains: name, mode: 'insensitive' } },
+          { lastName: { contains: name, mode: 'insensitive' } },
+        ],
+      });
+    }
+
+    const totalCount = await this.prisma.employee.count({ where });
+    const totalPages = Math.ceil(totalCount / pageSize);
+
+    const employees = await this.prisma.employee.findMany({
+      where,
+      take: pageSize,
+      skip: (page - 1) * pageSize,
+    });
+
+    return {
+      employees,
+      pagination:{
+        totalEmployees: totalCount,
+        page,
+        totalPages
+      }
+    };
+  }
+
+
+  async getEmployeeById(employeeId: string) {
+    return this.prisma.employee.findUnique({
+      where: { employeeId },
+    });
+  }
+
+  async createEmployee(data: any) {
+    return this.prisma.employee.create({
+      data,
+    });
+  }
+
+  async updateEmployee(employeeId: string, data: any) {
+    return this.prisma.employee.update({
+      where: { employeeId },
+      data,
+    });
+  }
+
+  async deleteEmployee(employeeId: string) {
+    return this.prisma.employee.delete({
+      where: { employeeId },
+    });
+  }
 }
